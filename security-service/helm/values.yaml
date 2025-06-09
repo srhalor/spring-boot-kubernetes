@@ -54,7 +54,7 @@ service:
   # This sets the service type more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
   type: ClusterIP
   # This sets the ports more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
-  port: 8080
+  port: 8088
 
 # This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
 ingress:
@@ -90,7 +90,7 @@ resources: {}
 livenessProbe:
   httpGet:
     path: /actuator/health/liveness
-    port: 8081
+    port: 8089
   initialDelaySeconds: 15
   periodSeconds: 20
   timeoutSeconds: 5
@@ -98,7 +98,7 @@ livenessProbe:
 readinessProbe:
   httpGet:
     path: /actuator/health/readiness
-    port: 8081
+    port: 8089
   initialDelaySeconds: 10
   periodSeconds: 10
   timeoutSeconds: 5

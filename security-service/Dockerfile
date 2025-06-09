@@ -11,7 +11,7 @@ WORKDIR /app
 COPY target/security-service-0.0.1.jar security-service.jar
 
 # Expose the port the application runs on
-EXPOSE 8080
+EXPOSE 8088
 
 # Start the application
 CMD ["java", "-jar", "security-service.jar"]
