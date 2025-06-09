@@ -65,7 +65,7 @@ class SecurityControllerTest {
                 // Expect HTTP 200 OK
                 .andExpect(status().isOk())
                 // Expect correct response body
-                .andExpect(MockMvcResultMatchers.content().string("User authenticated successfully"));
+                .andExpect(MockMvcResultMatchers.content().string("User 'username' authenticated successfully"));
     }
 
     /**
