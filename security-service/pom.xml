@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.fdm</groupId>
 	<artifactId>security-service</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.1</version>
 	<name>security-service</name>
 	<description>Security Service for managing user authentication and authorization</description>
 	<developers>
