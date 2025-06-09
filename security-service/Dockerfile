@@ -1,4 +1,5 @@
-FROM eclipse-temurin:21-jre
+# Use Amazon Corretto JDK 21 (Alpine) as the base image
+FROM amazoncorretto:21-alpine3.21-jdk
 
 # Create a non-root user to run the application
 RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
