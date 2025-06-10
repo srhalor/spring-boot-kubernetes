@@ -104,11 +104,6 @@ public class JwtUtil {
      */
     private void validatePayload(JwtPayload jwtPayload) {
 
-        // Check if the JWT payload is null
-        if (jwtPayload == null) {
-            throw new JwtAuthenticationException("JWT payload is null");
-        }
-
         log.trace("Validating token expiration");
         // Check if the JWT payload has a valid expiration date
         if (jwtPayload.expiration() == null) {
@@ -125,7 +120,5 @@ public class JwtUtil {
         if (!StringUtils.hasText(jwtPayload.subject())) {
             throw new JwtAuthenticationException("JWT payload subject is null or empty");
         }
-        
-
     }
 }

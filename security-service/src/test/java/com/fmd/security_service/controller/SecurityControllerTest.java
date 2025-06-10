@@ -1,7 +1,6 @@
 package com.fmd.security_service.controller;
 
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -11,9 +10,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
-import com.fmd.security_service.controller.SecurityController;
-
-import lombok.extern.slf4j.Slf4j;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Integration tests for {@link SecurityController}.
@@ -59,6 +56,24 @@ class SecurityControllerTest {
     @Test
     void whenValidTokenWithCorrectRoles_thenReturns200() throws Exception {
         log.info("Testing 200 OK for valid token with correct roles");
+        // Perform POST with valid token and check for 200 OK
+        mockMvc.perform(MockMvcRequestBuilders.post(URL)
+                // Add Authorization header with valid token
+                .header("Authorization", VALID_TOKEN_CORRECT_ROLES)
+                .contentType(MediaType.APPLICATION_JSON))
+                // Expect HTTP 200 OK
+                .andExpect(status().isOk())
+                // Expect correct response body
+                .andExpect(MockMvcResultMatchers.content().string("User 'username' authenticated successfully"));
+    }
+
+    /**
+     * Test: Should return 200 OK for valid token with correct roles
+     * but authentication.getPrincipal() does not return UserDetails.
+     */
+    @Test
+    void whenValidTokenWithCorrectRolesAndPrincipalNotUserDetails_thenReturns200() throws Exception {
+        log.info("Testing 200 OK for valid token with correct roles and principal not UserDetails");
         // Perform POST with valid token and check for 200 OK
         mockMvc.perform(MockMvcRequestBuilders.post(URL)
                 // Add Authorization header with valid token

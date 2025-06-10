@@ -1,12 +1,7 @@
 package com.fmd.security_service.filter;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-
+import jakarta.servlet.FilterChain;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,10 +9,8 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import com.fmd.security_service.filter.JwtAuthenticationFilter;
-
-import jakarta.servlet.FilterChain;
-import lombok.extern.slf4j.Slf4j;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for {@link JwtAuthenticationFilter}.
@@ -72,6 +65,21 @@ class JwtAuthenticationFilterTest {
         log.debug("Authentication after filter: {}", SecurityContextHolder.getContext().getAuthentication());
         assertNotNull(SecurityContextHolder.getContext().getAuthentication(), "Authentication should be set");
         assertEquals("username", SecurityContextHolder.getContext().getAuthentication().getName());
+        verify(filterChain, times(1)).doFilter(request, response);
+    }
+
+    /**
+     * Tests that a valid JWT token but authentication is already set
+     * in the security context.
+     */
+    @Test
+    void testDoFilterInternal_validToken_alreadyAuthenticated() throws Exception {
+        log.info("Testing valid JWT token with already authenticated context");
+        SecurityContextHolder.getContext().setAuthentication(mock(org.springframework.security.core.Authentication.class));
+        request.addHeader("Authorization", VALID_TOKEN);
+        filter.doFilterInternal(request, response, filterChain);
+        log.debug("Authentication after filter: {}", SecurityContextHolder.getContext().getAuthentication());
+        assertNotNull(SecurityContextHolder.getContext().getAuthentication(), "Authentication should still be set");
         verify(filterChain, times(1)).doFilter(request, response);
     }
 

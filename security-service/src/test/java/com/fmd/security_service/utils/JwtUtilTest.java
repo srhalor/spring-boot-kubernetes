@@ -1,21 +1,15 @@
 package com.fmd.security_service.utils;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import com.fmd.security_service.dto.JwtPayload;
+import com.fmd.security_service.exception.JwtAuthenticationException;
+import com.fmd.security_service.exception.JwtParseException;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.util.Base64;
 
-import org.junit.jupiter.api.Test;
-
-import com.fmd.security_service.dto.JwtPayload;
-import com.fmd.security_service.exception.JwtAuthenticationException;
-import com.fmd.security_service.exception.JwtParseException;
-import com.fmd.security_service.utils.JwtUtil;
-
-import lombok.extern.slf4j.Slf4j;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for {@link JwtUtil} utility class.
@@ -162,5 +156,17 @@ class JwtUtilTest {
         String signature = "sig";
         String token = "Bearer " + header + "." + payload + "." + signature;
         assertThrows(JwtAuthenticationException.class, () -> JwtUtil.validateAndExtractPayload(token));
+    }
+
+    /**
+     * Tests that a token with a null payload throws a JwtAuthenticationException.
+     */
+    @Test
+    void testValidatePayload_nullPayload() {
+        log.info("Testing token with null payload");
+        String header = Base64.getUrlEncoder().encodeToString("{\"alg\":\"none\"}".getBytes());
+        String signature = "sig";
+        String token = "Bearer " + header + ".null." + signature;
+        assertThrows(JwtParseException.class, () -> JwtUtil.validateAndExtractPayload(token));
     }
 }
