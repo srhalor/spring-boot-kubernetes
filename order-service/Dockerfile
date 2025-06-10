@@ -8,10 +8,10 @@ RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
 WORKDIR /app
 
 # Copy the JAR file into the container
-COPY target/security-service-0.0.1.jar security-service.jar
+COPY target/order-service-0.0.1.jar order-service.jar
 
 # Expose the port the application runs on
-EXPOSE 8088
+EXPOSE 8090
 
 # Start the application
-CMD ["java", "-jar", "security-service.jar"]
+CMD ["java", "-jar", "order-service.jar"]
