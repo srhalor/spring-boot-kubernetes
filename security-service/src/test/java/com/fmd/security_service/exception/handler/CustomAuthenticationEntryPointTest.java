@@ -1,28 +1,21 @@
 package com.fmd.security_service.exception.handler;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.when;
-
-import java.io.IOException;
-
+import com.fmd.security_service.dto.ApiError;
+import com.fmd.security_service.utils.ErrorResponseUtil;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.security.core.AuthenticationException;
 
-import com.fmd.security_service.dto.ApiError;
-import com.fmd.security_service.exception.handler.CustomAuthenticationEntryPoint;
-import com.fmd.security_service.utils.ErrorResponseUtil;
+import java.io.IOException;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.extern.slf4j.Slf4j;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for {@link CustomAuthenticationEntryPoint}.
@@ -37,10 +30,10 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 class CustomAuthenticationEntryPointTest {
-    private CustomAuthenticationEntryPoint entryPoint;
-    private HttpServletRequest request;
-    private HttpServletResponse response;
-    private AuthenticationException exception;
+    private final CustomAuthenticationEntryPoint entryPoint = new CustomAuthenticationEntryPoint();
+    private final HttpServletRequest request = mock(HttpServletRequest.class);
+    private final HttpServletResponse response = mock(HttpServletResponse.class);
+    private final AuthenticationException exception = mock(AuthenticationException.class);
 
     /**
      * Sets up the test environment before each test.
@@ -50,10 +43,6 @@ class CustomAuthenticationEntryPointTest {
     @BeforeEach
     void setUp() {
         log.info("Setting up test environment for CustomAuthenticationEntryPointTest");
-        entryPoint = new CustomAuthenticationEntryPoint();
-        request = mock(HttpServletRequest.class);
-        response = mock(HttpServletResponse.class);
-        exception = mock(AuthenticationException.class);
         when(exception.getMessage()).thenReturn("Invalid credentials");
     }
 
@@ -71,15 +60,14 @@ class CustomAuthenticationEntryPointTest {
         log.info("Testing that commence() sends a 401 response with ApiError");
         // Arrange
         when(request.getRequestURI()).thenReturn("/api/test");
-        var util = mockStatic(ErrorResponseUtil.class);
+        try (var util = mockStatic(ErrorResponseUtil.class)) {
+            // Act
+            entryPoint.commence(request, response, exception);
 
-        // Act
-        entryPoint.commence(request, response, exception);
-
-        // Assert
-        util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(401), any(ApiError.class)));
-        log.debug("Verified ErrorResponseUtil.writeErrorResponse called with 401 and ApiError");
-        util.close();
+            // Assert
+            util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(401), any(ApiError.class)));
+            log.debug("Verified ErrorResponseUtil.writeErrorResponse called with 401 and ApiError");
+        }
     }
 
     /**
@@ -95,19 +83,20 @@ class CustomAuthenticationEntryPointTest {
     void commence_setsApiErrorFieldsCorrectly() throws IOException {
         log.info("Testing that commence() sets ApiError fields correctly");
         when(request.getRequestURI()).thenReturn("/api/test");
-        var util = mockStatic(ErrorResponseUtil.class);
-        ArgumentCaptor<ApiError> captor = ArgumentCaptor.forClass(ApiError.class);
+        try(var util = mockStatic(ErrorResponseUtil.class)) {
+            ArgumentCaptor<ApiError> captor = ArgumentCaptor.forClass(ApiError.class);
 
-        entryPoint.commence(request, response, exception);
+            entryPoint.commence(request, response, exception);
 
-        util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(401), captor.capture()));
-        ApiError apiError = captor.getValue();
-        log.debug("ApiError captured: {}", apiError);
-        assertEquals(401, apiError.status());
-        assertEquals("Unauthorized", apiError.error());
-        assertTrue(apiError.message().contains("Invalid credentials"));
-        assertEquals("/api/test", apiError.path());
-        assertNotNull(apiError.timestamp());
-        util.close();
+            util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(401), captor.capture()));
+            ApiError apiError = captor.getValue();
+            log.debug("ApiError captured: {}", apiError);
+            assertThat(apiError.status()).isEqualTo(401);
+            assertThat(apiError.error()).isEqualTo("Unauthorized");
+            assertThat(apiError.message()).contains("Invalid credentials");
+            assertThat(apiError.path()).isEqualTo("/api/test");
+            assertThat(apiError.timestamp()).isNotNull();
+        }
     }
+
 }
