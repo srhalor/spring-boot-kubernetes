@@ -6,9 +6,13 @@ import com.fmd.security_service.exception.JwtParseException;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.InvocationTargetException;
 import java.time.Instant;
 import java.util.Base64;
 
+import static java.lang.reflect.Modifier.PRIVATE;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -34,6 +38,36 @@ class JwtUtilTest {
             "iOlsiVXNlciIsIkFkbWluIl19.2gS8pFXJuQ1u19GjDp7UcyTRVVlmBWNnJSukjDz2ENQ";
 
     /**
+     * Tests that the JwtUtil class is defined as a Final class.
+     */
+    @Test
+    void testJwtUtil_isFinal() {
+        log.info("Testing JwtUtil is defined as a Final class");
+        assertThat(JwtUtil.class)
+                .isFinal();
+    }
+
+    /**
+     * Tests that the JwtUtil class has a private constructor.
+     * <p>
+     * Verifies that the constructor is not accessible from outside the class.
+     * </p>
+     */
+    @Test
+    void testJwtUtil_hasPrivateConstructor() throws Exception {
+        log.info("Testing JwtUtil has a private constructor");
+
+        var declaredConstructor = JwtUtil.class.getDeclaredConstructor();
+        assertThat(declaredConstructor.getModifiers())
+                .as("Constructor should be private")
+                .isEqualTo(PRIVATE);
+        declaredConstructor.setAccessible(true);
+        assertThatThrownBy(declaredConstructor::newInstance)
+                .isInstanceOf(InvocationTargetException.class)
+                .hasCauseInstanceOf(UnsupportedOperationException.class);
+    }
+
+    /**
      * Tests that a valid JWT token is parsed correctly and all payload fields are
      * extracted as expected.
      */
@@ -42,13 +76,12 @@ class JwtUtilTest {
         log.info("Testing valid JWT token extraction");
         JwtPayload payload = JwtUtil.validateAndExtractPayload(VALID_TOKEN);
         log.debug("Extracted payload: {}", payload);
-        assertEquals("username", payload.subject());
-        assertEquals("Johnny", payload.name());
-        assertEquals("Test", payload.issuer());
-        assertEquals("audiance", payload.audience());
-        assertNotNull(payload.expiration());
-        assertTrue(payload.roles().contains("User"));
-        assertTrue(payload.roles().contains("Admin"));
+        assertThat(payload.subject()).isEqualTo("username");
+        assertThat(payload.name()).isEqualTo("Johnny");
+        assertThat(payload.issuer()).isEqualTo("Test");
+        assertThat(payload.audience()).isEqualTo("audiance");
+        assertThat(payload.expiration()).isNotNull();
+        assertThat(payload.roles()).containsExactlyInAnyOrder("User", "Admin");
     }
 
     /**

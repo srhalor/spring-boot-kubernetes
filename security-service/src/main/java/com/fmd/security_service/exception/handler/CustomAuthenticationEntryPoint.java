@@ -1,20 +1,17 @@
 package com.fmd.security_service.exception.handler;
 
-import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
-import static org.springframework.http.HttpStatus.UNAUTHORIZED;
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
-
-import java.io.IOException;
-
+import com.fmd.security_service.dto.ApiError;
+import com.fmd.security_service.utils.ErrorResponseUtil;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 
-import com.fmd.security_service.dto.ApiError;
-import com.fmd.security_service.utils.ErrorResponseUtil;
+import java.io.IOException;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 /**
  * Custom AuthenticationEntryPoint to return a JSON response on authentication
@@ -51,8 +48,6 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
             HttpServletResponse response,
             AuthenticationException authException) throws IOException {
 
-        response.setContentType(APPLICATION_JSON_VALUE);
-        response.setStatus(SC_UNAUTHORIZED);
         // Build ApiError object for the response
         ApiError apiError = new ApiError(UNAUTHORIZED,
                 "Authentication failed: " + authException.getMessage(),
