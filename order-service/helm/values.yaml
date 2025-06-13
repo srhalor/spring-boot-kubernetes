@@ -9,7 +9,7 @@ replicaCount: 2
 image:
   repository: srhalor/order-service
   # This sets the pull policy for images.
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: latest
 
@@ -64,6 +64,7 @@ ingress:
     kubernetes.io/ingress.class: nginx
     nginx.ingress.kubernetes.io/rewrite-target: /$2
     nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/auth-url: "http://api.fmd.com/security-service/api/security/authenticate"
   hosts:
     - host: api.fmd.com
       paths:
