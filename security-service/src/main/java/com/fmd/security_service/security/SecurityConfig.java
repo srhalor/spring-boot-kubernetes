@@ -69,6 +69,7 @@ public class SecurityConfig {
             // Allow unauthenticated access to /auth/** endpoints
             auth.requestMatchers("/actuator/**").permitAll();
             auth.requestMatchers("/health").permitAll();
+            auth.requestMatchers("/error").permitAll();
             // Allow all OPTIONS requests (CORS preflight)
             auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
             // Require authentication for all other requests

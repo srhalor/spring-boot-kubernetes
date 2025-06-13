@@ -9,9 +9,9 @@ replicaCount: 2
 image:
   repository: srhalor/security-service
   # This sets the pull policy for images.
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: latest
+  tag: 1.0.2
 
 # This is for the secrets for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
 imagePullSecrets: []
@@ -54,7 +54,7 @@ service:
   # This sets the service type more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
   type: ClusterIP
   # This sets the ports more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
-  port: 8088
+  port: 8080
 
 # This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
 ingress:
@@ -62,16 +62,13 @@ ingress:
   className: "nginx"
   annotations:
     kubernetes.io/ingress.class: nginx
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
     nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
   hosts:
     - host: api.fmd.com
       paths:
-        - path: /(/|$)(.*)
-          pathType: Prefix
-          backend:
-            serviceName: security-service
-            servicePort: 80
+        - path: /security-service(/|$)(.*)
+          pathType: ImplementationSpecific
   tls: []
 
 resources: {}
@@ -90,7 +87,7 @@ resources: {}
 livenessProbe:
   httpGet:
     path: /actuator/health/liveness
-    port: 8089
+    port: 8081
   initialDelaySeconds: 15
   periodSeconds: 20
   timeoutSeconds: 5
@@ -98,7 +95,7 @@ livenessProbe:
 readinessProbe:
   httpGet:
     path: /actuator/health/readiness
-    port: 8089
+    port: 8081
   initialDelaySeconds: 10
   periodSeconds: 10
   timeoutSeconds: 5

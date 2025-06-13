@@ -36,7 +36,7 @@ class SecurityControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    private static final String URL = "/api/security/authenticate";
+    private static final String URL = "/api/authenticate";
     private static final String VALID_TOKEN_CORRECT_ROLES = "Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJUZXN0IiwiaWF0IjoxNzQ3OTI3NjkyLCJleHAiOjE3Nzk0NjM2OTcsImF1ZCI6ImF1ZGlhbmNlIiwic3ViIjoidXNlcm5hbWUiLCJuYW1lIjoiSm9obm55Iiwicm9sZXMiOlsiVXNlciIsIkFkbWluIl19.2gS8pFXJuQ1u19GjDp7UcyTRVVlmBWNnJSukjDz2ENQ";
     private static final String VALID_TOKEN_INCORRECT_ROLES = "Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJUZXN0IiwiaWF0IjoxNzQ3OTI3NjkyLCJleHAiOjE3Nzk0NjM2OTcsImF1ZCI6ImF1ZGlhbmNlIiwic3ViIjoidXNlcm5hbWUiLCJuYW1lIjoiSm9obm55In0.z0kVJ8VRaoEg2xzMy9i2aJ-0sV1rfZLnVt2DuEycxbQ";
     private static final String INVALID_TOKEN = "Bearer invalid.token.value";
@@ -48,7 +48,7 @@ class SecurityControllerTest {
      * Explanation:
      * </p>
      * <ul>
-     * <li>Performs a POST request with a valid JWT containing 'User' and 'Admin'
+     * <li>Performs a GET request with a valid JWT containing 'User' and 'Admin'
      * roles.</li>
      * <li>Expects HTTP 200 and the correct success message.</li>
      * </ul>
@@ -56,8 +56,8 @@ class SecurityControllerTest {
     @Test
     void whenValidTokenWithCorrectRoles_thenReturns200() throws Exception {
         log.info("Testing 200 OK for valid token with correct roles");
-        // Perform POST with valid token and check for 200 OK
-        mockMvc.perform(MockMvcRequestBuilders.post(URL)
+        // Perform GET with valid token and check for 200 OK
+        mockMvc.perform(MockMvcRequestBuilders.get(URL)
                 // Add Authorization header with valid token
                 .header("Authorization", VALID_TOKEN_CORRECT_ROLES)
                 .contentType(MediaType.APPLICATION_JSON))
@@ -74,8 +74,8 @@ class SecurityControllerTest {
     @Test
     void whenValidTokenWithCorrectRolesAndPrincipalNotUserDetails_thenReturns200() throws Exception {
         log.info("Testing 200 OK for valid token with correct roles and principal not UserDetails");
-        // Perform POST with valid token and check for 200 OK
-        mockMvc.perform(MockMvcRequestBuilders.post(URL)
+        // Perform GET with valid token and check for 200 OK
+        mockMvc.perform(MockMvcRequestBuilders.get(URL)
                 // Add Authorization header with valid token
                 .header("Authorization", VALID_TOKEN_CORRECT_ROLES)
                 .contentType(MediaType.APPLICATION_JSON))
@@ -93,15 +93,15 @@ class SecurityControllerTest {
      * Explanation:
      * </p>
      * <ul>
-     * <li>Performs a POST request with a valid JWT missing required roles.</li>
+     * <li>Performs a GET request with a valid JWT missing required roles.</li>
      * <li>Expects HTTP 403 Forbidden.</li>
      * </ul>
      */
     @Test
     void whenValidTokenWithIncorrectRoles_thenReturns403() throws Exception {
         log.info("Testing 403 Forbidden for valid token with incorrect/missing roles");
-        // Perform POST with valid token but missing required roles
-        mockMvc.perform(MockMvcRequestBuilders.post(URL)
+        // Perform GET with valid token but missing required roles
+        mockMvc.perform(MockMvcRequestBuilders.get(URL)
                 .header("Authorization", VALID_TOKEN_INCORRECT_ROLES)
                 .contentType(MediaType.APPLICATION_JSON))
                 // Expect HTTP 403 Forbidden
@@ -115,15 +115,15 @@ class SecurityControllerTest {
      * Explanation:
      * </p>
      * <ul>
-     * <li>Performs a POST request with an invalid JWT.</li>
+     * <li>Performs a GET request with an invalid JWT.</li>
      * <li>Expects HTTP 401 Unauthorized.</li>
      * </ul>
      */
     @Test
     void whenInvalidToken_thenReturns401() throws Exception {
         log.info("Testing 401 Unauthorized for invalid token");
-        // Perform POST with invalid token
-        mockMvc.perform(MockMvcRequestBuilders.post(URL)
+        // Perform GET with invalid token
+        mockMvc.perform(MockMvcRequestBuilders.get(URL)
                 .header("Authorization", INVALID_TOKEN)
                 .contentType(MediaType.APPLICATION_JSON))
                 // Expect HTTP 401 Unauthorized
@@ -137,15 +137,15 @@ class SecurityControllerTest {
      * Explanation:
      * </p>
      * <ul>
-     * <li>Performs a POST request without Authorization header.</li>
+     * <li>Performs a GET request without Authorization header.</li>
      * <li>Expects HTTP 401 Unauthorized.</li>
      * </ul>
      */
     @Test
     void whenNoAuthorizationHeader_thenReturns401() throws Exception {
         log.info("Testing 401 Unauthorized for missing Authorization header");
-        // Perform POST without Authorization header
-        mockMvc.perform(MockMvcRequestBuilders.post(URL)
+        // Perform GET without Authorization header
+        mockMvc.perform(MockMvcRequestBuilders.get(URL)
                 .contentType(MediaType.APPLICATION_JSON))
                 // Expect HTTP 401 Unauthorized
                 .andExpect(status().isUnauthorized());
