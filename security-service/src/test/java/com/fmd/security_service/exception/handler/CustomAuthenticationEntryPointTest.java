@@ -1,6 +1,7 @@
 package com.fmd.security_service.exception.handler;
 
 import com.fmd.security_service.dto.ApiError;
+import com.fmd.security_service.testutil.ApiErrorAssertUtil;
 import com.fmd.security_service.utils.ErrorResponseUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -12,7 +13,6 @@ import org.springframework.security.core.AuthenticationException;
 
 import java.io.IOException;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.*;
  * Verifies that a 401 response with an ApiError is sent on authentication
  * failure.
  * </p>
- * 
+ *
  * @author Shailesh Halor
  * @version 1.0
  * @since 1.0
@@ -83,20 +83,57 @@ class CustomAuthenticationEntryPointTest {
     void commence_setsApiErrorFieldsCorrectly() throws IOException {
         log.info("Testing that commence() sets ApiError fields correctly");
         when(request.getRequestURI()).thenReturn("/api/test");
-        try(var util = mockStatic(ErrorResponseUtil.class)) {
+        try (var util = mockStatic(ErrorResponseUtil.class)) {
             ArgumentCaptor<ApiError> captor = ArgumentCaptor.forClass(ApiError.class);
-
             entryPoint.commence(request, response, exception);
-
             util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(401), captor.capture()));
             ApiError apiError = captor.getValue();
             log.debug("ApiError captured: {}", apiError);
-            assertThat(apiError.status()).isEqualTo(401);
-            assertThat(apiError.error()).isEqualTo("Unauthorized");
-            assertThat(apiError.message()).contains("Invalid credentials");
-            assertThat(apiError.path()).isEqualTo("/api/test");
-            assertThat(apiError.timestamp()).isNotNull();
+            ApiErrorAssertUtil.assertApiError(apiError, 401, "Unauthorized", "Invalid credentials", "/api/test");
         }
     }
 
+    /**
+     * Tests that commence() handles all combinations of null and non-null
+     * values for exception.getMessage() and request.getRequestURI().
+     * <p>
+     * Ensures full branch coverage for ApiError construction and string
+     * concatenation.
+     * </p>
+     *
+     * @throws IOException if an input or output exception occurs
+     */
+    @Test
+    void commence_allMessageAndUriCombinations() throws IOException {
+        log.info("Testing all combinations of null/non-null for exception.getMessage() and request.getRequestURI()");
+        // 1. getMessage() == null, getRequestURI() == null
+        when(exception.getMessage()).thenReturn(null);
+        when(request.getRequestURI()).thenReturn(null);
+        try (var util = mockStatic(ErrorResponseUtil.class)) {
+            entryPoint.commence(request, response, exception);
+            util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(401), any(ApiError.class)));
+        }
+
+        // 2. getMessage() == null, getRequestURI() != null
+        when(request.getRequestURI()).thenReturn("/api/nullmsg");
+        try (var util = mockStatic(ErrorResponseUtil.class)) {
+            entryPoint.commence(request, response, exception);
+            util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(401), any(ApiError.class)));
+        }
+
+        // 3. getMessage() != null, getRequestURI() == null
+        when(exception.getMessage()).thenReturn("Invalid credentials");
+        when(request.getRequestURI()).thenReturn(null);
+        try (var util = mockStatic(ErrorResponseUtil.class)) {
+            entryPoint.commence(request, response, exception);
+            util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(401), any(ApiError.class)));
+        }
+
+        // 4. getMessage() != null, getRequestURI() != null
+        when(request.getRequestURI()).thenReturn("/api/test");
+        try (var util = mockStatic(ErrorResponseUtil.class)) {
+            entryPoint.commence(request, response, exception);
+            util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(401), any(ApiError.class)));
+        }
+    }
 }
