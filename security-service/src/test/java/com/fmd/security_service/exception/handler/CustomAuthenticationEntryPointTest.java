@@ -94,6 +94,48 @@ class CustomAuthenticationEntryPointTest {
     }
 
     /**
+     * Tests that commence() handles null and empty message and URI.
+     * <p>
+     * Verifies that ApiError is constructed with null or empty values for
+     * message and path as appropriate.
+     * </p>
+     *
+     * @throws IOException if an input or output exception occurs
+     */
+    @Test
+    void commence_withNullOrEmptyMessageAndUri() throws IOException {
+        log.info("Testing commence() with null/empty message and URI");
+        // Null message
+        when(exception.getMessage()).thenReturn(null);
+        when(request.getRequestURI()).thenReturn("/api/nullmsg");
+        try (var util = mockStatic(ErrorResponseUtil.class)) {
+            entryPoint.commence(request, response, exception);
+            util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(401), any(ApiError.class)));
+        }
+        // Null URI
+        when(exception.getMessage()).thenReturn("Invalid credentials");
+        when(request.getRequestURI()).thenReturn(null);
+        try (var util = mockStatic(ErrorResponseUtil.class)) {
+            entryPoint.commence(request, response, exception);
+            util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(401), any(ApiError.class)));
+        }
+        // Empty message
+        when(exception.getMessage()).thenReturn("");
+        when(request.getRequestURI()).thenReturn("/api/emptymessage");
+        try (var util = mockStatic(ErrorResponseUtil.class)) {
+            entryPoint.commence(request, response, exception);
+            util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(401), any(ApiError.class)));
+        }
+        // Empty URI
+        when(exception.getMessage()).thenReturn("Invalid credentials");
+        when(request.getRequestURI()).thenReturn("");
+        try (var util = mockStatic(ErrorResponseUtil.class)) {
+            entryPoint.commence(request, response, exception);
+            util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(401), any(ApiError.class)));
+        }
+    }
+
+    /**
      * Tests that commence() handles all combinations of null and non-null
      * values for exception.getMessage() and request.getRequestURI().
      * <p>
@@ -113,14 +155,12 @@ class CustomAuthenticationEntryPointTest {
             entryPoint.commence(request, response, exception);
             util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(401), any(ApiError.class)));
         }
-
         // 2. getMessage() == null, getRequestURI() != null
         when(request.getRequestURI()).thenReturn("/api/nullmsg");
         try (var util = mockStatic(ErrorResponseUtil.class)) {
             entryPoint.commence(request, response, exception);
             util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(401), any(ApiError.class)));
         }
-
         // 3. getMessage() != null, getRequestURI() == null
         when(exception.getMessage()).thenReturn("Invalid credentials");
         when(request.getRequestURI()).thenReturn(null);
@@ -128,7 +168,6 @@ class CustomAuthenticationEntryPointTest {
             entryPoint.commence(request, response, exception);
             util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(401), any(ApiError.class)));
         }
-
         // 4. getMessage() != null, getRequestURI() != null
         when(request.getRequestURI()).thenReturn("/api/test");
         try (var util = mockStatic(ErrorResponseUtil.class)) {

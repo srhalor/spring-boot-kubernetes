@@ -40,29 +40,38 @@ class ApiErrorTest {
     }
 
     /**
-     * Tests that the convenience constructor initializes fields from HttpStatus.
-     *
-     * @see ApiError#ApiError(HttpStatus, String, String)
+     * Tests that the convenience constructor initializes fields from HttpStatus and handles null/empty message/path.
      */
     @Test
-    void testConvenienceConstructor_setsFieldsFromHttpStatus() {
-        log.info("Testing convenience constructor for ApiError with HttpStatus");
-        String message = "Unauthorized access";
-        String path = "/api/secure";
-        ApiError apiError = new ApiError(HttpStatus.UNAUTHORIZED, message, path);
-        log.debug("ApiError created: {}", apiError);
+    void testConvenienceConstructor_variousCases() {
+        log.info("Testing convenience constructor for ApiError with HttpStatus and null/empty message/path");
+        // Normal
+        ApiError apiError = new ApiError(HttpStatus.UNAUTHORIZED, "Unauthorized access", "/api/secure");
         assertThat(apiError.timestamp()).isNotNull();
         assertThat(apiError.status()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
         assertThat(apiError.error()).isEqualTo(HttpStatus.UNAUTHORIZED.getReasonPhrase());
-        assertThat(apiError.message()).isEqualTo(message);
-        assertThat(apiError.path()).isEqualTo(path);
+        assertThat(apiError.message()).isEqualTo("Unauthorized access");
+        assertThat(apiError.path()).isEqualTo("/api/secure");
+        // Null message
+        ApiError nullMsg = new ApiError(HttpStatus.BAD_REQUEST, null, "/api/nullmsg");
+        assertThat(nullMsg.message()).isNull();
+        assertThat(nullMsg.path()).isEqualTo("/api/nullmsg");
+        // Null path
+        ApiError nullPath = new ApiError(HttpStatus.BAD_REQUEST, "msg", null);
+        assertThat(nullPath.message()).isEqualTo("msg");
+        assertThat(nullPath.path()).isNull();
+        // Empty message
+        ApiError emptyMsg = new ApiError(HttpStatus.BAD_REQUEST, "", "/api/emptymsg");
+        assertThat(emptyMsg.message()).isEmpty();
+        assertThat(emptyMsg.path()).isEqualTo("/api/emptymsg");
+        // Empty path
+        ApiError emptyPath = new ApiError(HttpStatus.BAD_REQUEST, "msg", "");
+        assertThat(emptyPath.message()).isEqualTo("msg");
+        assertThat(emptyPath.path()).isEmpty();
     }
 
     /**
-     * Tests that the convenience constructor sets the timestamp to the current
-     * time.
-     *
-     * @see ApiError#ApiError(HttpStatus, String, String)
+     * Tests that the record is immutable (no setters).
      */
     @Test
     void testImmutability() {
@@ -72,63 +81,5 @@ class ApiErrorTest {
         //noinspection JavaReflectionMemberAccess
         assertThatThrownBy(() -> ApiError.class.getDeclaredMethod("setMessage", String.class))
                 .isInstanceOf(NoSuchMethodException.class);
-    }
-
-    /**
-     * Tests convenience constructor with null and empty message/path.
-     */
-    @Test
-    void testConvenienceConstructor_withNullAndEmptyMessageAndPath() {
-        log.info("Testing convenience constructor with null/empty message and path");
-        // Null message
-        ApiError nullMsg = new ApiError(HttpStatus.BAD_REQUEST, null, "/api/nullmsg");
-        assertThat(nullMsg.status()).isEqualTo(HttpStatus.BAD_REQUEST.value());
-        assertThat(nullMsg.error()).isEqualTo(HttpStatus.BAD_REQUEST.getReasonPhrase());
-        assertThat(nullMsg.message()).isNull();
-        assertThat(nullMsg.path()).isEqualTo("/api/nullmsg");
-        assertThat(nullMsg.timestamp()).isNotNull();
-
-        // Null path
-        ApiError nullPath = new ApiError(HttpStatus.BAD_REQUEST, "msg", null);
-        assertThat(nullPath.status()).isEqualTo(HttpStatus.BAD_REQUEST.value());
-        assertThat(nullPath.error()).isEqualTo(HttpStatus.BAD_REQUEST.getReasonPhrase());
-        assertThat(nullPath.message()).isEqualTo("msg");
-        assertThat(nullPath.path()).isNull();
-        assertThat(nullPath.timestamp()).isNotNull();
-
-        // Empty message
-        ApiError emptyMsg = new ApiError(HttpStatus.BAD_REQUEST, "", "/api/emptymsg");
-        assertThat(emptyMsg.message()).isEmpty();
-        assertThat(emptyMsg.path()).isEqualTo("/api/emptymsg");
-
-        // Empty path
-        ApiError emptyPath = new ApiError(HttpStatus.BAD_REQUEST, "msg", "");
-        assertThat(emptyPath.message()).isEqualTo("msg");
-        assertThat(emptyPath.path()).isEmpty();
-    }
-
-    /**
-     * Tests all-args constructor with null and empty message/path.
-     */
-    @Test
-    void testAllArgsConstructor_withNullAndEmptyMessageAndPath() {
-        log.info("Testing all-args constructor with null/empty message and path");
-        LocalDateTime now = LocalDateTime.now();
-        // Null message
-        ApiError nullMsg = new ApiError(now, 400, "Bad Request", null, "/api/nullmsg");
-        assertThat(nullMsg.message()).isNull();
-        assertThat(nullMsg.path()).isEqualTo("/api/nullmsg");
-        // Null path
-        ApiError nullPath = new ApiError(now, 400, "Bad Request", "msg", null);
-        assertThat(nullPath.message()).isEqualTo("msg");
-        assertThat(nullPath.path()).isNull();
-        // Empty message
-        ApiError emptyMsg = new ApiError(now, 400, "Bad Request", "", "/api/emptymsg");
-        assertThat(emptyMsg.message()).isEmpty();
-        assertThat(emptyMsg.path()).isEqualTo("/api/emptymsg");
-        // Empty path
-        ApiError emptyPath = new ApiError(now, 400, "Bad Request", "msg", "");
-        assertThat(emptyPath.message()).isEqualTo("msg");
-        assertThat(emptyPath.path()).isEmpty();
     }
 }

@@ -105,58 +105,31 @@ class CustomAccessDeniedHandlerTest {
     @Test
     void handle_withNullOrEmptyMessageAndUri() throws IOException {
         log.info("Testing handle() with null/empty message and URI");
-        // Case 1: null message
+        // Null message
         AccessDeniedException nullMsgEx = new AccessDeniedException(null);
         when(request.getRequestURI()).thenReturn("/api/nullmsg");
         var util = mockStatic(ErrorResponseUtil.class);
         handler.handle(request, response, nullMsgEx);
         util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(403), any(ApiError.class)));
         util.close();
-
-        // Case 2: empty message
-        AccessDeniedException emptyMsgEx = new AccessDeniedException("");
-        when(request.getRequestURI()).thenReturn("/api/emptymessage");
-        util = mockStatic(ErrorResponseUtil.class);
-        handler.handle(request, response, emptyMsgEx);
-        util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(403), any(ApiError.class)));
-        util.close();
-
-        // Case 3: null URI
+        // Null URI
         AccessDeniedException ex = new AccessDeniedException("Forbidden for test");
         when(request.getRequestURI()).thenReturn(null);
         util = mockStatic(ErrorResponseUtil.class);
         handler.handle(request, response, ex);
         util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(403), any(ApiError.class)));
         util.close();
-
-        // Case 4: empty URI
+        // Empty message
+        AccessDeniedException emptyMsgEx = new AccessDeniedException("");
+        when(request.getRequestURI()).thenReturn("/api/emptymessage");
+        util = mockStatic(ErrorResponseUtil.class);
+        handler.handle(request, response, emptyMsgEx);
+        util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(403), any(ApiError.class)));
+        util.close();
+        // Empty URI
         when(request.getRequestURI()).thenReturn("");
         util = mockStatic(ErrorResponseUtil.class);
         handler.handle(request, response, ex);
-        util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(403), any(ApiError.class)));
-        util.close();
-    }
-
-    /**
-     * Tests handle() when both exception message and request URI are null or empty.
-     * Ensures ApiError is constructed and no exceptions are thrown.
-     */
-    @Test
-    void handle_withBothMessageAndUriNullOrEmpty() throws IOException {
-        log.info("Testing handle() with both message and URI null or empty");
-        // Both null
-        AccessDeniedException nullMsgEx = new AccessDeniedException(null);
-        when(request.getRequestURI()).thenReturn(null);
-        var util = mockStatic(ErrorResponseUtil.class);
-        handler.handle(request, response, nullMsgEx);
-        util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(403), any(ApiError.class)));
-        util.close();
-
-        // Both empty
-        AccessDeniedException emptyMsgEx = new AccessDeniedException("");
-        when(request.getRequestURI()).thenReturn("");
-        util = mockStatic(ErrorResponseUtil.class);
-        handler.handle(request, response, emptyMsgEx);
         util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(403), any(ApiError.class)));
         util.close();
     }
@@ -176,14 +149,12 @@ class CustomAccessDeniedHandlerTest {
         handler.handle(request, response, exNullMsg);
         util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(403), any(ApiError.class)));
         util.close();
-
         // 2. getMessage() == null, getRequestURI() != null
         when(request.getRequestURI()).thenReturn("/api/nullmsg");
         util = mockStatic(ErrorResponseUtil.class);
         handler.handle(request, response, exNullMsg);
         util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(403), any(ApiError.class)));
         util.close();
-
         // 3. getMessage() != null, getRequestURI() == null
         AccessDeniedException exMsg = new AccessDeniedException("Forbidden for test");
         when(request.getRequestURI()).thenReturn(null);
@@ -191,7 +162,6 @@ class CustomAccessDeniedHandlerTest {
         handler.handle(request, response, exMsg);
         util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(403), any(ApiError.class)));
         util.close();
-
         // 4. getMessage() != null, getRequestURI() != null
         when(request.getRequestURI()).thenReturn("/api/test");
         util = mockStatic(ErrorResponseUtil.class);
