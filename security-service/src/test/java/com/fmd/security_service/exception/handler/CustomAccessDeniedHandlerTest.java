@@ -1,34 +1,28 @@
 package com.fmd.security_service.exception.handler;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.when;
-
-import java.io.IOException;
-
+import com.fmd.security_service.dto.ApiError;
+import com.fmd.security_service.testutil.ApiErrorAssertUtil;
+import com.fmd.security_service.utils.ErrorResponseUtil;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.security.access.AccessDeniedException;
 
-import com.fmd.security_service.dto.ApiError;
-import com.fmd.security_service.utils.ErrorResponseUtil;
+import java.io.IOException;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.extern.slf4j.Slf4j;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for {@link CustomAccessDeniedHandler}.
  * <p>
  * Verifies that a 403 response with an ApiError is sent on access denied.
  * </p>
- * 
+ *
  * @author Shailesh Halor
  * @version 1.0
  * @since 1.0
@@ -96,17 +90,83 @@ class CustomAccessDeniedHandlerTest {
         when(request.getRequestURI()).thenReturn("/api/test");
         var util = mockStatic(ErrorResponseUtil.class);
         ArgumentCaptor<ApiError> captor = ArgumentCaptor.forClass(ApiError.class);
-
         handler.handle(request, response, exception);
-
         util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(403), captor.capture()));
         ApiError apiError = captor.getValue();
         log.debug("ApiError captured: {}", apiError);
-        assertEquals(403, apiError.status());
-        assertEquals("Forbidden", apiError.error());
-        assertTrue(apiError.message().contains("Forbidden for test"));
-        assertEquals("/api/test", apiError.path());
-        assertNotNull(apiError.timestamp());
+        ApiErrorAssertUtil.assertApiError(apiError, 403, "Forbidden", "Forbidden for test", "/api/test");
+        util.close();
+    }
+
+    /**
+     * Tests handle() when exception message and request URI are null or empty.
+     * Ensures ApiError is constructed and no exceptions are thrown.
+     */
+    @Test
+    void handle_withNullOrEmptyMessageAndUri() throws IOException {
+        log.info("Testing handle() with null/empty message and URI");
+        // Null message
+        AccessDeniedException nullMsgEx = new AccessDeniedException(null);
+        when(request.getRequestURI()).thenReturn("/api/nullmsg");
+        var util = mockStatic(ErrorResponseUtil.class);
+        handler.handle(request, response, nullMsgEx);
+        util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(403), any(ApiError.class)));
+        util.close();
+        // Null URI
+        AccessDeniedException ex = new AccessDeniedException("Forbidden for test");
+        when(request.getRequestURI()).thenReturn(null);
+        util = mockStatic(ErrorResponseUtil.class);
+        handler.handle(request, response, ex);
+        util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(403), any(ApiError.class)));
+        util.close();
+        // Empty message
+        AccessDeniedException emptyMsgEx = new AccessDeniedException("");
+        when(request.getRequestURI()).thenReturn("/api/emptymessage");
+        util = mockStatic(ErrorResponseUtil.class);
+        handler.handle(request, response, emptyMsgEx);
+        util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(403), any(ApiError.class)));
+        util.close();
+        // Empty URI
+        when(request.getRequestURI()).thenReturn("");
+        util = mockStatic(ErrorResponseUtil.class);
+        handler.handle(request, response, ex);
+        util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(403), any(ApiError.class)));
+        util.close();
+    }
+
+    /**
+     * Tests handle() with all combinations of null/non-null for
+     * accessDeniedException.getMessage() and request.getRequestURI().
+     * Ensures ApiError is constructed correctly in all cases.
+     */
+    @Test
+    void handle_allMessageAndUriCombinations() throws IOException {
+        log.info("Testing handle() with all combinations of null/non-null message and URI");
+        // 1. getMessage() == null, getRequestURI() == null
+        AccessDeniedException exNullMsg = new AccessDeniedException(null);
+        when(request.getRequestURI()).thenReturn(null);
+        var util = mockStatic(ErrorResponseUtil.class);
+        handler.handle(request, response, exNullMsg);
+        util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(403), any(ApiError.class)));
+        util.close();
+        // 2. getMessage() == null, getRequestURI() != null
+        when(request.getRequestURI()).thenReturn("/api/nullmsg");
+        util = mockStatic(ErrorResponseUtil.class);
+        handler.handle(request, response, exNullMsg);
+        util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(403), any(ApiError.class)));
+        util.close();
+        // 3. getMessage() != null, getRequestURI() == null
+        AccessDeniedException exMsg = new AccessDeniedException("Forbidden for test");
+        when(request.getRequestURI()).thenReturn(null);
+        util = mockStatic(ErrorResponseUtil.class);
+        handler.handle(request, response, exMsg);
+        util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(403), any(ApiError.class)));
+        util.close();
+        // 4. getMessage() != null, getRequestURI() != null
+        when(request.getRequestURI()).thenReturn("/api/test");
+        util = mockStatic(ErrorResponseUtil.class);
+        handler.handle(request, response, exMsg);
+        util.verify(() -> ErrorResponseUtil.writeErrorResponse(eq(response), eq(403), any(ApiError.class)));
         util.close();
     }
 }

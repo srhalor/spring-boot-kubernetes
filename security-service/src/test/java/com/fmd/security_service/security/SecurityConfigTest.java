@@ -1,15 +1,9 @@
 package com.fmd.security_service.security;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import org.junit.jupiter.api.BeforeEach;
+import com.fmd.security_service.exception.handler.CustomAccessDeniedHandler;
+import com.fmd.security_service.exception.handler.CustomAuthenticationEntryPoint;
+import com.fmd.security_service.filter.JwtAuthenticationFilter;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -18,12 +12,10 @@ import org.springframework.security.web.DefaultSecurityFilterChain;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import com.fmd.security_service.exception.handler.CustomAccessDeniedHandler;
-import com.fmd.security_service.exception.handler.CustomAuthenticationEntryPoint;
-import com.fmd.security_service.filter.JwtAuthenticationFilter;
-import com.fmd.security_service.security.SecurityConfig;
-
-import lombok.extern.slf4j.Slf4j;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for {@link SecurityConfig}.
@@ -45,16 +37,9 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 class SecurityConfigTest {
-    private CustomAuthenticationEntryPoint entryPoint;
-    private CustomAccessDeniedHandler accessDeniedHandler;
-    private SecurityConfig securityConfig;
-
-    @BeforeEach
-    void setUp() {
-        entryPoint = mock(CustomAuthenticationEntryPoint.class);
-        accessDeniedHandler = mock(CustomAccessDeniedHandler.class);
-        securityConfig = new SecurityConfig(entryPoint, accessDeniedHandler);
-    }
+    private final CustomAuthenticationEntryPoint entryPoint = mock(CustomAuthenticationEntryPoint.class);
+    private final CustomAccessDeniedHandler accessDeniedHandler = mock(CustomAccessDeniedHandler.class);
+    private final SecurityConfig securityConfig = new SecurityConfig(entryPoint, accessDeniedHandler);
 
     /**
      * Verifies that permitAllSecurityFilterChain configures HttpSecurity as
@@ -114,7 +99,7 @@ class SecurityConfigTest {
         log.debug("SecurityFilterChain built: {}", chain);
         // Asserts that the filter chain is not null, indicating successful
         // configuration.
-        assertNotNull(chain);
+        assertThat(chain).isNotNull();
         // Verifies that each configuration method was called as expected, ensuring the
         // security setup is correct.
         verify(http).csrf(any());
@@ -158,7 +143,7 @@ class SecurityConfigTest {
         log.debug("AuthenticationManager returned: {}", result);
         // Asserts that the returned AuthenticationManager is the same as the mocked
         // one.
-        assertEquals(manager, result);
+        assertThat(result).isSameAs(manager);
         // Verifies that the getAuthenticationManager method was called on the
         // configuration object.
         verify(config).getAuthenticationManager();

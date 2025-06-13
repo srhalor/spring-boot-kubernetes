@@ -1,24 +1,21 @@
 package com.fmd.security_service.dto;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
-import java.time.LocalDateTime;
-
+import com.fmd.security_service.testutil.ApiErrorAssertUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
-import com.fmd.security_service.dto.ApiError;
+import java.time.LocalDateTime;
 
-import lombok.extern.slf4j.Slf4j;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Unit tests for {@link ApiError} record.
  * <p>
  * Verifies correct construction, field values, and immutability.
  * </p>
- * 
+ *
  * @author Shailesh Halor
  * @version 1.0
  * @since 1.0
@@ -38,45 +35,51 @@ class ApiErrorTest {
         String message = "Resource not found";
         String path = "/api/test";
         ApiError apiError = new ApiError(now, status, error, message, path);
-        log.debug("ApiError created: {}", apiError);
-        assertEquals(now, apiError.timestamp());
-        assertEquals(status, apiError.status());
-        assertEquals(error, apiError.error());
-        assertEquals(message, apiError.message());
-        assertEquals(path, apiError.path());
+        log.debug("ApiError created : {}", apiError);
+        ApiErrorAssertUtil.assertApiErrorFields(apiError, now, status, error, message, path);
     }
 
     /**
-     * Tests that the convenience constructor initializes fields from HttpStatus.
-     * 
-     * @see ApiError#ApiError(HttpStatus, String, String)
+     * Tests that the convenience constructor initializes fields from HttpStatus and handles null/empty message/path.
      */
     @Test
-    void testConvenienceConstructor_setsFieldsFromHttpStatus() {
-        log.info("Testing convenience constructor for ApiError with HttpStatus");
-        String message = "Unauthorized access";
-        String path = "/api/secure";
-        ApiError apiError = new ApiError(HttpStatus.UNAUTHORIZED, message, path);
-        log.debug("ApiError created: {}", apiError);
-        assertNotNull(apiError.timestamp());
-        assertEquals(HttpStatus.UNAUTHORIZED.value(), apiError.status());
-        assertEquals(HttpStatus.UNAUTHORIZED.getReasonPhrase(), apiError.error());
-        assertEquals(message, apiError.message());
-        assertEquals(path, apiError.path());
+    void testConvenienceConstructor_variousCases() {
+        log.info("Testing convenience constructor for ApiError with HttpStatus and null/empty message/path");
+        // Normal
+        ApiError apiError = new ApiError(HttpStatus.UNAUTHORIZED, "Unauthorized access", "/api/secure");
+        assertThat(apiError.timestamp()).isNotNull();
+        assertThat(apiError.status()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
+        assertThat(apiError.error()).isEqualTo(HttpStatus.UNAUTHORIZED.getReasonPhrase());
+        assertThat(apiError.message()).isEqualTo("Unauthorized access");
+        assertThat(apiError.path()).isEqualTo("/api/secure");
+        // Null message
+        ApiError nullMsg = new ApiError(HttpStatus.BAD_REQUEST, null, "/api/nullmsg");
+        assertThat(nullMsg.message()).isNull();
+        assertThat(nullMsg.path()).isEqualTo("/api/nullmsg");
+        // Null path
+        ApiError nullPath = new ApiError(HttpStatus.BAD_REQUEST, "msg", null);
+        assertThat(nullPath.message()).isEqualTo("msg");
+        assertThat(nullPath.path()).isNull();
+        // Empty message
+        ApiError emptyMsg = new ApiError(HttpStatus.BAD_REQUEST, "", "/api/emptymsg");
+        assertThat(emptyMsg.message()).isEmpty();
+        assertThat(emptyMsg.path()).isEqualTo("/api/emptymsg");
+        // Empty path
+        ApiError emptyPath = new ApiError(HttpStatus.BAD_REQUEST, "msg", "");
+        assertThat(emptyPath.message()).isEqualTo("msg");
+        assertThat(emptyPath.path()).isEmpty();
     }
 
     /**
-     * Tests that the convenience constructor sets the timestamp to the current
-     * time.
-     * 
-     * @see ApiError#ApiError(HttpStatus, String, String)
+     * Tests that the record is immutable (no setters).
      */
     @Test
     void testImmutability() {
         log.info("Testing immutability of ApiError record");
         new ApiError(HttpStatus.BAD_REQUEST, "Bad request", "/api/bad");
         // Record fields are final; no setters exist
-        assertThrows(NoSuchMethodException.class,
-                () -> ApiError.class.getDeclaredMethod("setMessage", String.class));
+        //noinspection JavaReflectionMemberAccess
+        assertThatThrownBy(() -> ApiError.class.getDeclaredMethod("setMessage", String.class))
+                .isInstanceOf(NoSuchMethodException.class);
     }
 }
