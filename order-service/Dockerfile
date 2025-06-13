@@ -10,9 +10,5 @@ WORKDIR /app
 # Copy the JAR file into the container
 COPY target/order-service-0.0.1.jar order-service.jar
 
-# Expose the port the application runs on
-EXPOSE 8090
-EXPOSE 8091
-
 # Start the application
 CMD ["java", "-jar", "order-service.jar"]

@@ -11,7 +11,7 @@ image:
   # This sets the pull policy for images.
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: latest
+  tag: 1.0.2
 
 # This is for the secrets for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
 imagePullSecrets: []
@@ -54,7 +54,7 @@ service:
   # This sets the service type more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
   type: ClusterIP
   # This sets the ports more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
-  port: 8090
+  port: 8080
 
 # This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
 ingress:
@@ -62,17 +62,15 @@ ingress:
   className: "nginx"
   annotations:
     kubernetes.io/ingress.class: nginx
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
     nginx.ingress.kubernetes.io/use-regex: "true"
-    nginx.ingress.kubernetes.io/auth-url: "http://api.fmd.com/security-service/api/security/authenticate"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/auth-url: "http://security-service.myspace.svc.cluster.local:8080/api/authenticate"
+    nginx.ingress.kubernetes.io/auth-response-headers: Authorization
   hosts:
     - host: api.fmd.com
       paths:
         - path: /order-service(/|$)(.*)
-          pathType: Prefix
-          backend:
-            serviceName: order-service
-            servicePort: 80
+          pathType: ImplementationSpecific
   tls: []
 
 resources: {}
@@ -91,7 +89,7 @@ resources: {}
 livenessProbe:
   httpGet:
     path: /actuator/health/liveness
-    port: 8091
+    port: 8081
   initialDelaySeconds: 15
   periodSeconds: 20
   timeoutSeconds: 5
@@ -99,7 +97,7 @@ livenessProbe:
 readinessProbe:
   httpGet:
     path: /actuator/health/readiness
-    port: 8091
+    port: 8081
   initialDelaySeconds: 10
   periodSeconds: 10
   timeoutSeconds: 5
