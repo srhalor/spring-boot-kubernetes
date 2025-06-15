@@ -42,8 +42,8 @@ public class EmailServerServiceImpl implements EmailServerService {
      * after the specified timestamp.
      * </p>
      *
-     * @param subjectLike          a string pattern to match against email subjects
-     * @param emailReceivedAfter   an Instant representing the earliest time an email can be received
+     * @param subjectLike        a string pattern to match against email subjects
+     * @param emailReceivedAfter an Instant representing the earliest time an email can be received
      * @return a list of EmailMessage objects that match the criteria
      */
     @Override
@@ -57,6 +57,7 @@ public class EmailServerServiceImpl implements EmailServerService {
         }
 
         try (EmailServerConnection connection = EmailServerConnectionUtil.openConnection(emailServerProperties, false)) {
+            log.debug("Fetching emails with criteria: subjectLike={}, emailReceivedAfter={}", subjectLike, emailReceivedAfter);
             Folder folder = connection.folder();
             Message[] messages = folder.search(searchTerm);
 
@@ -98,7 +99,12 @@ public class EmailServerServiceImpl implements EmailServerService {
      * @param flag      the flag to be set on the email message
      */
     private void updateFlag(String messageId, Flag flag) {
+        if (messageId == null || messageId.isBlank()) {
+            log.warn("Message ID is null or blank. Cannot update flag.");
+            return;
+        }
         try (EmailServerConnection connection = EmailServerConnectionUtil.openConnection(emailServerProperties, true)) {
+            log.debug("Updating flag {} on email with messageId={}", flag, messageId);
             Folder folder = connection.folder();
             SearchTerm searchTerm = new HeaderTerm("Message-ID", messageId);
             Message[] messages = folder.search(searchTerm);
@@ -114,18 +120,27 @@ public class EmailServerServiceImpl implements EmailServerService {
     /**
      * Builds a SearchTerm based on the provided subject pattern and email received timestamp.
      *
-     * @param subjectLike          a string pattern to match against email subjects
-     * @param emailReceivedAfter   an Instant representing the earliest time an email can be received
+     * @param subjectLike        a string pattern to match against email subjects
+     * @param emailReceivedAfter an Instant representing the earliest time an email can be received
      * @return a SearchTerm that can be used to filter emails, or null if no criteria are provided
      */
     private static SearchTerm buildSearchTerm(String subjectLike, Instant emailReceivedAfter) {
+        if (subjectLike == null && emailReceivedAfter == null) {
+            log.warn("No search criteria provided. Returning null SearchTerm.");
+            return null;
+        }
+        log.debug("Building SearchTerm with subjectLike={} and emailReceivedAfter={}", subjectLike, emailReceivedAfter);
         List<SearchTerm> terms = new ArrayList<>();
-        if (subjectLike != null) terms.add(new SubjectTerm(subjectLike));
-        if (emailReceivedAfter != null)
+        if (subjectLike != null) {
+            terms.add(new SubjectTerm(subjectLike));
+        }
+        if (emailReceivedAfter != null) {
             terms.add(new ReceivedDateTerm(ComparisonTerm.GE, Date.from(emailReceivedAfter)));
-
-        if (terms.isEmpty()) return null;
-        if (terms.size() == 1) return terms.getFirst();
+        }
+        if (terms.size() == 1) {
+            return terms.getFirst();
+        }
+        // If multiple terms are present, combine them using AndTerm
         return new AndTerm(terms.toArray(new SearchTerm[0]));
     }
 }

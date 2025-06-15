@@ -16,9 +16,10 @@ import lombok.*;
 @Entity
 @Table(name = "order_requests")
 @Getter
-@ToString(callSuper = true)
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@ToString
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class OrderRequest extends AuditableEntity {
 
     @Id

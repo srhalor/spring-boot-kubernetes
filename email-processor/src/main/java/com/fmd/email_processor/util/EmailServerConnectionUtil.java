@@ -7,6 +7,7 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.Session;
 import jakarta.mail.Store;
 import lombok.experimental.UtilityClass;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Properties;
 
@@ -21,6 +22,7 @@ import java.util.Properties;
  * @version 1.0
  * @since 1.0
  */
+@Slf4j
 @UtilityClass
 public final class EmailServerConnectionUtil {
 
@@ -33,16 +35,20 @@ public final class EmailServerConnectionUtil {
      * @throws MessagingException if there is an error connecting to the server or opening the folder
      */
     public static EmailServerConnection openConnection(EmailServerProperties props, boolean readWrite) throws MessagingException {
+        log.info("Opening connection to email server: {}", props.host());
         Properties mailProps = new Properties();
         mailProps.put("mail.store.protocol", props.protocol());
         mailProps.put("mail.imaps.port", String.valueOf(props.port()));
 
         Session session = Session.getInstance(mailProps);
 
+        // Create a store and connect to the email server
         Store store = session.getStore();
         store.connect(props.host(), props.port(), props.username(), props.password());
         Folder folder = store.getFolder(props.folder());
         folder.open(readWrite ? Folder.READ_WRITE : Folder.READ_ONLY);
+
+        log.info("Connected to email server: {}, folder: {}", props.host(), props.folder());
 
         return EmailServerConnection.builder()
                 .store(store)

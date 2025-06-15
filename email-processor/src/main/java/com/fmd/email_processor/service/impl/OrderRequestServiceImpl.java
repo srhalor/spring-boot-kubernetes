@@ -50,6 +50,7 @@ public class OrderRequestServiceImpl implements OrderRequestService {
     @Transactional
     public void markProcessed(Long requestId) {
         updateOrderRequest(requestId, "Completed", true, 0, null);
+        log.info("OrderRequest marked as processed: {}", requestId);
     }
 
     /**
@@ -75,19 +76,24 @@ public class OrderRequestServiceImpl implements OrderRequestService {
      * @param failureReason reason for failure, if applicable
      */
     private void updateOrderRequest(Long requestId, String newStatus, boolean processedFlag, int increment, String failureReason) {
+
         OrderRequest request = orderRequestRepository.findById(requestId)
                 .orElseThrow(() -> new EntityNotFoundException("OrderRequest not found: " + requestId));
+
+        // Validate the new retry count against the maximum allowed retries
         int newRetryCount = request.getRetryCount() + increment;
         if (newRetryCount > properties.maxRetry()) {
             log.error("Max retry count exceeded for OrderRequest: {}", requestId);
             throw new IllegalStateException("Max retry count exceeded for OrderRequest: " + requestId);
         }
+        log.debug("Updating OrderRequest ID: {}, Status: {}, Processed: {}, RetryCount: {}, FailureReason: {}",
+                requestId, newStatus, processedFlag, request.getRetryCount() + increment, failureReason);
+        // Update the OrderRequest with the new values
         int updated = orderRequestRepository.updateOrderRequest(
                 requestId, newStatus, processedFlag, newRetryCount, failureReason
         );
         if (updated != 1) {
-            log.error("Failed to update OrderRequest");
-            throw new EntityNotFoundException("OrderRequest not found: " + requestId);
+            log.error("Failed to update OrderRequest with ID: {}", requestId);
         }
     }
 }

@@ -35,6 +35,7 @@ public record EmailServerConnection(Store store, Folder folder) implements AutoC
     public void close() {
         try {
             if (folder != null && folder.isOpen()) {
+                log.debug("Closing folder: {}", folder.getName());
                 folder.close(true);
             }
         } catch (MessagingException e) {
@@ -42,6 +43,7 @@ public record EmailServerConnection(Store store, Folder folder) implements AutoC
         }
         try {
             if (store != null && store.isConnected()) {
+                log.debug("Closing store: {}", store.getURLName());
                 store.close();
             }
         } catch (MessagingException e) {

@@ -3,6 +3,7 @@ package com.fmd.email_processor.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
@@ -20,6 +21,7 @@ import java.time.Instant;
  * @version 1.0
  * @since 1.0
  */
+@Slf4j
 @MappedSuperclass
 @Getter
 @Setter
@@ -41,6 +43,7 @@ public abstract class AuditableEntity implements Serializable {
      */
     @PrePersist
     protected void onCreate() {
+        log.debug("Setting createdAt and updatedAt timestamps for entity: {}", this.getClass().getSimpleName());
         Instant now = Instant.now();
         this.createdAt = now;
         this.updatedAt = now;
@@ -54,6 +57,7 @@ public abstract class AuditableEntity implements Serializable {
      */
     @PreUpdate
     protected void onUpdate() {
+        log.debug("Updating updatedAt timestamp for entity: {}", this.getClass().getSimpleName());
         this.updatedAt = Instant.now();
     }
 }

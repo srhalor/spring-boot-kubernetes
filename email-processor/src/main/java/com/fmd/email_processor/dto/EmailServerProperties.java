@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
@@ -24,6 +25,7 @@ import org.springframework.validation.annotation.Validated;
  * @version 1.0
  * @since 1.0
  */
+@Slf4j
 @Validated
 @ConfigurationProperties(prefix = "batch.job.email")
 public record EmailServerProperties(
@@ -53,10 +55,12 @@ public record EmailServerProperties(
      */
     public EmailServerProperties {
         if (port == null) {
-            port = 993; // Default IMAP port
+            log.warn("Port is not specified, using default value of 993.");
+            port = 993;
         }
         if (protocol == null || protocol.isBlank()) {
-            protocol = "imaps"; // Default protocol
+            log.warn("Protocol is not specified, using default value of 'imaps'.");
+            protocol = "imaps";
         }
     }
 }

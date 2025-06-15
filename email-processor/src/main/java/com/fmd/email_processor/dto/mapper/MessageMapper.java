@@ -27,7 +27,10 @@ public class MessageMapper {
      * @return an EmailMessage DTO containing the mapped data, or null if mapping fails
      */
     public static EmailMessage mapTo(Message message) {
-        if (message == null) return null;
+        if (message == null) {
+            log.warn("Received null message, returning null EmailMessage");
+            return null;
+        }
         try {
             return EmailMessage.builder()
                     .messageId(getHeader(message))
@@ -55,6 +58,7 @@ public class MessageMapper {
         if (message.getReceivedDate() != null) {
             return message.getReceivedDate().toInstant().toEpochMilli();
         }
+        log.warn("Received date is null for message: {}", message.getSubject());
         return null;
     }
 
@@ -71,6 +75,7 @@ public class MessageMapper {
         if (null != values && values.length > 0) {
             return values[0];
         }
+        log.warn("Message-ID header not found for message: {}", message.getSubject());
         return null;
     }
 }

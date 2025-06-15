@@ -2,6 +2,7 @@ package com.fmd.email_processor.dto;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
@@ -19,6 +20,7 @@ import org.springframework.validation.annotation.Validated;
  * @version 1.0
  * @since 1.0
  */
+@Slf4j
 @Validated
 @ConfigurationProperties(prefix = "batch.job")
 public record BatchJobProperties(
@@ -40,15 +42,15 @@ public record BatchJobProperties(
      */
     public BatchJobProperties {
         if (chunkSize == null) {
-            // Default chunk size is set to 25 if not specified
+            log.warn("Chunk size is not specified, using default value of 25.");
             chunkSize = 25;
         }
         if (maxRetry == null) {
-            // Default maximum retry attempts is set to 5 if not specified
+            log.warn("Max retry is not specified, using default value of 5.");
             maxRetry = 5;
         }
         if (intervalMs == null) {
-            // Default interval is set to 60 seconds (60,000 milliseconds) if not specified
+            log.warn("Interval is not specified, using default value of 60 seconds.");
             intervalMs = 60_000L;
         }
     }

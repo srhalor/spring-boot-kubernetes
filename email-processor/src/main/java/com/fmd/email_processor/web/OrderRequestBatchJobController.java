@@ -57,8 +57,10 @@ public class OrderRequestBatchJobController {
     @PostMapping("/start")
     public synchronized String startJob() {
         if (scheduledFuture != null && !scheduledFuture.isCancelled()) {
+            log.info("Order request batch job is already running.");
             return "Batch job is already running.";
         }
+        log.info("Starting order request batch job with interval {} ms.", batchJobProperties.intervalMs());
         scheduledFuture = taskScheduler.scheduleAtFixedRate(
                 batchProcessingService::fetchNextBatchAndProcess,
                 Duration.ofMillis(batchJobProperties.intervalMs())
@@ -79,8 +81,10 @@ public class OrderRequestBatchJobController {
     @PostMapping("/stop")
     public synchronized String stopJob() {
         if (scheduledFuture == null || scheduledFuture.isCancelled()) {
+            log.info("Order request batch job is not running.");
             return "Batch job is not running.";
         }
+        log.info("Stopping order request batch job.");
         scheduledFuture.cancel(false);
         log.info("Order request batch job stopped.");
         return "Batch job stopped.";
