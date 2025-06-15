@@ -1,8 +1,10 @@
 package com.fmd.email_processor;
 
+import com.fmd.email_processor.dto.BatchJobProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 /**
  * Main application class for the Email Processor Service.
@@ -17,6 +19,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  */
 @Slf4j
 @SpringBootApplication
+@EnableConfigurationProperties(BatchJobProperties.class)
 public class EmailProcessorApplication {
 
 	/**
