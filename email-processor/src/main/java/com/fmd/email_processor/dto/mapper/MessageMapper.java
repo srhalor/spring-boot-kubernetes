@@ -9,11 +9,23 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.Objects;
 
 /**
+ * Utility class to map a Jakarta Mail Message to an EmailMessage DTO.
+ * Handles null checks and exceptions gracefully.
+ *
  * @author Shailesh Halor
+ * @version 1.0
+ * @since 1.0
  */
 @Slf4j
 @UtilityClass
 public class MessageMapper {
+
+    /**
+     * Maps a Jakarta Mail Message to an EmailMessage DTO.
+     *
+     * @param message the Jakarta Mail Message to map
+     * @return an EmailMessage DTO containing the mapped data, or null if mapping fails
+     */
     public static EmailMessage mapTo(Message message) {
         if (message == null) return null;
         try {
@@ -33,6 +45,12 @@ public class MessageMapper {
         }
     }
 
+    /**
+     * Utility to extract the received date from a Message.
+     *
+     * @param message the message
+     * @return the received date as milliseconds since epoch, or null if not available
+     */
     private static Long getReceivedAt(Message message) throws MessagingException {
         if (message.getReceivedDate() != null) {
             return message.getReceivedDate().toInstant().toEpochMilli();
@@ -41,10 +59,11 @@ public class MessageMapper {
     }
 
     /**
-     * Utility to extract a single header value from a Message.
+     * Extracts the Message-ID header from a Jakarta Mail Message.
      *
-     * @param message the message
-     * @return the value, or null if not found or error
+     * @param message the message to extract the header from
+     * @return the Message-ID header value, or null if not present
+     * @throws MessagingException if an error occurs while accessing the message headers
      */
     private static String getHeader(Message message) throws MessagingException {
         log.debug("Extracting Message-ID header from message: {}", message.getSubject());

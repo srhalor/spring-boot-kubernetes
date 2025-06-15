@@ -18,9 +18,15 @@ import java.time.Instant;
 import java.util.*;
 
 /**
- * Default implementation of {@link EmailServerService}.
+ * Implementation of the EmailServerService interface.
  * <p>
- * Connects to an IMAP email server using {@link EmailServerProperties} and manages resources via try-with-resources.
+ * This service handles interactions with the email server, including fetching emails,
+ * marking them as processed, and deleting them based on specified criteria.
+ * </p>
+ *
+ * @author Shailesh Halor
+ * @version 1.0
+ * @since 1.0
  */
 @Slf4j
 @Service
@@ -29,6 +35,17 @@ public class EmailServerServiceImpl implements EmailServerService {
 
     private final EmailServerProperties emailServerProperties;
 
+    /**
+     * Fetches emails from the mail server based on the specified criteria.
+     * <p>
+     * This method retrieves emails that match the given subject pattern and were received
+     * after the specified timestamp.
+     * </p>
+     *
+     * @param subjectLike          a string pattern to match against email subjects
+     * @param emailReceivedAfter   an Instant representing the earliest time an email can be received
+     * @return a list of EmailMessage objects that match the criteria
+     */
     @Override
     public List<EmailMessage> fetchEmails(String subjectLike, Instant emailReceivedAfter) {
         SearchTerm searchTerm = buildSearchTerm(subjectLike, emailReceivedAfter);
@@ -54,18 +71,31 @@ public class EmailServerServiceImpl implements EmailServerService {
         }
     }
 
+    /**
+     * Marks the email identified by the given messageId as processed by setting the SEEN flag.
+     *
+     * @param messageId the unique identifier of the email message to be marked as processed
+     */
     @Override
     public void markEmailAsProcessed(String messageId) {
         updateFlag(messageId, Flag.SEEN);
     }
 
+    /**
+     * Deletes the email identified by the given messageId by setting the DELETED flag.
+     *
+     * @param messageId the unique identifier of the email message to be deleted
+     */
     @Override
     public void deleteEmail(String messageId) {
         updateFlag(messageId, Flag.DELETED);
     }
 
     /**
-     * Utility to update message flags.
+     * Updates the specified flag on the email message identified by the given messageId.
+     *
+     * @param messageId the unique identifier of the email message
+     * @param flag      the flag to be set on the email message
      */
     private void updateFlag(String messageId, Flag flag) {
         try (EmailServerConnection connection = EmailServerConnectionUtil.openConnection(emailServerProperties, true)) {
@@ -82,10 +112,11 @@ public class EmailServerServiceImpl implements EmailServerService {
     }
 
     /**
-     * Builds a composite SearchTerm for IMAP search based on provided filters.
+     * Builds a SearchTerm based on the provided subject pattern and email received timestamp.
      *
-     * @param subjectLike  pattern for subject or null
-     * @return SearchTerm or null if no filters applied
+     * @param subjectLike          a string pattern to match against email subjects
+     * @param emailReceivedAfter   an Instant representing the earliest time an email can be received
+     * @return a SearchTerm that can be used to filter emails, or null if no criteria are provided
      */
     private static SearchTerm buildSearchTerm(String subjectLike, Instant emailReceivedAfter) {
         List<SearchTerm> terms = new ArrayList<>();

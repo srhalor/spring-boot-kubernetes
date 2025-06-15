@@ -13,9 +13,15 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * Default implementation of {@link OrderRequestService}.
+ * Implementation of the OrderRequestService interface.
  * <p>
- * Note: Do not log requestId directly—set it in MDC for structured logging.
+ * This service handles operations related to OrderRequest entities, including fetching batches,
+ * marking requests as processed or failed, and updating their status in the database.
+ * </p>
+ *
+ * @author Shailesh Halor
+ * @version 1.0
+ * @since 1.0
  */
 @Slf4j
 @Service
@@ -25,18 +31,33 @@ public class OrderRequestServiceImpl implements OrderRequestService {
     private final OrderRequestRepository orderRequestRepository;
     private final BatchJobProperties properties;
 
+    /**
+     * Fetches the next batch of OrderRequests from the database.
+     * This method retrieves a list of OrderRequests that are ready for processing,
+     */
     @Override
     @Transactional(readOnly = true)
     public List<OrderRequest> fetchNextBatch() {
         return orderRequestRepository.fetchNextBatch(properties.maxRetry(), properties.chunkSize());
     }
 
+    /**
+     * Marks an OrderRequest as processed by updating its status and flags in the database.
+     *
+     * @param requestId the ID of the OrderRequest to mark as processed
+     */
     @Override
     @Transactional
     public void markProcessed(Long requestId) {
         updateOrderRequest(requestId, "Completed", true, 0, null);
     }
 
+    /**
+     * Marks an OrderRequest as failed by updating its status, flags, and failure reason in the database.
+     *
+     * @param requestId     the ID of the OrderRequest to mark as failed
+     * @param failureReason the reason for the failure
+     */
     @Override
     @Transactional
     public void markFailed(Long requestId, String failureReason) {
@@ -45,12 +66,13 @@ public class OrderRequestServiceImpl implements OrderRequestService {
     }
 
     /**
-     * Common method to update status, processed flag, and retry count for an OrderRequest.
+     * Updates the status of an OrderRequest in the database.
      *
-     * @param requestId     the request ID
-     * @param newStatus     new status value
-     * @param processedFlag true if processed, false otherwise
-     * @param increment     0 to keep retry count as is, 1 to increment retry count by 1
+     * @param requestId     the ID of the OrderRequest to update
+     * @param newStatus     the new status to set (e.g., "Completed", "Error")
+     * @param processedFlag flag indicating if the request was processed successfully
+     * @param increment     the amount to increment the retry count
+     * @param failureReason reason for failure, if applicable
      */
     private void updateOrderRequest(Long requestId, String newStatus, boolean processedFlag, int increment, String failureReason) {
         OrderRequest request = orderRequestRepository.findById(requestId)

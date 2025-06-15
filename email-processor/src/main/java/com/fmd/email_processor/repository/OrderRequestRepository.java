@@ -13,12 +13,29 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * Repository abstraction for order requests. Replace with JPA as needed.
+ * Repository interface for managing OrderRequest entities.
+ * <p>
+ * This interface provides methods to fetch and update order requests in the database.
+ * It supports batch processing with optimistic locking to handle concurrent updates.
+ * </p>
+ *
+ * @author Shailesh Halor
+ * @version 1.0
+ * @since 1.0
  */
 @Repository
 public interface OrderRequestRepository extends JpaRepository<OrderRequest, Long> {
+
     /**
-     * Fetches the next batch of order requests to process.
+     * Fetches the next batch of unprocessed OrderRequests that have not exceeded the maximum retry count.
+     * <p>
+     * This method uses pessimistic locking to ensure that the fetched records are locked for processing,
+     * preventing other transactions from modifying them until the current transaction is completed.
+     * </p>
+     *
+     * @param maxRetry  maximum retry count for processing
+     * @param chunkSize number of records to fetch in this batch
+     * @return list of OrderRequest entities ready for processing
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query(
@@ -39,13 +56,17 @@ public interface OrderRequestRepository extends JpaRepository<OrderRequest, Long
     );
 
     /**
-     * Atomically updates the status, processed flag, and retry count for a given OrderRequest.
+     * Updates the status and processing details of an OrderRequest.
+     * <p>
+     * This method is used to mark an order request as processed or to update its retry count and failure reason.
+     * </p>
      *
-     * @param id         the OrderRequest ID
-     * @param status     new status
-     * @param processed  new processed flag
-     * @param retryCount new retry count
-     * @return rows updated (should be 1 if success)
+     * @param id            ID of the OrderRequest to update
+     * @param status        new status of the OrderRequest
+     * @param processed     whether the OrderRequest has been processed
+     * @param retryCount    number of retries attempted for this OrderRequest
+     * @param failureReason reason for failure, if applicable
+     * @return number of rows affected by the update
      */
     @Modifying
     @Transactional

@@ -15,8 +15,15 @@ import java.util.Objects;
 import java.util.concurrent.*;
 
 /**
- * Service to fetch the next batch of order requests and process them in parallel chunks,
- * immediately querying for the next chunk as soon as the current one is complete.
+ * Implementation of the OrderRequestBatchProcessingService interface.
+ * <p>
+ * This service fetches and processes batches of order requests in parallel,
+ * ensuring efficient handling of email processing tasks.
+ * </p>
+ *
+ * @author Shailesh Halor
+ * @version 1.0
+ * @since 1.0
  */
 @Slf4j
 @Service
@@ -26,15 +33,21 @@ public class OrderRequestBatchProcessingServiceImpl implements OrderRequestBatch
     private final OrderRequestService orderRequestService;
     private final EmailProcessingService emailProcessingService;
 
-    // Thread pool for parallel processing of order requests.
+    /**
+     * Thread pool for processing order requests in parallel.
+     * Uses a fixed thread pool based on the number of available processors.
+     */
     private final ExecutorService processingPool = Executors.newFixedThreadPool(
             Runtime.getRuntime().availableProcessors(),
             new CustomizableThreadFactory("order-req-processing-")
     );
 
     /**
-     * Continuously fetches and processes batches of order requests in parallel.
-     * Stops when there are no more records to process.
+     * Fetches the next batch of order requests and processes them in parallel.
+     * <p>
+     * This method continuously fetches batches of order requests and submits them
+     * for processing until no more requests are available.
+     * </p>
      */
     @Override
     public void fetchNextBatchAndProcess() {
@@ -70,7 +83,7 @@ public class OrderRequestBatchProcessingServiceImpl implements OrderRequestBatch
     }
 
     /**
-     * Processes a single order request using EmailProcessingService and updates its status.
+     * Processes a single OrderRequest by fetching and persisting new emails.
      *
      * @param orderRequest the order request to process
      */
@@ -87,7 +100,10 @@ public class OrderRequestBatchProcessingServiceImpl implements OrderRequestBatch
     }
 
     /**
-     * Clean up processing pool on bean destruction.
+     * Shuts down the processing pool gracefully.
+     * <p>
+     * This method ensures that all tasks are completed before shutting down the pool.
+     * </p>
      */
     @PreDestroy
     public void shutdownProcessingPool() {

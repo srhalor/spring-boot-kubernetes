@@ -10,8 +10,15 @@ import java.io.Serializable;
 import java.time.Instant;
 
 /**
- * Base entity for audit fields (creation and update timestamps).
- * Extend this in your JPA entities for automatic audit information.
+ * Base class for entities that require auditing information.
+ * Provides fields for creation and update timestamps.
+ * <p>
+ * This class should be extended by any entity that requires auditing.
+ * </p>
+ *
+ * @author Shailesh Halor
+ * @version 1.0
+ * @since 1.0
  */
 @MappedSuperclass
 @Getter
@@ -26,6 +33,12 @@ public abstract class AuditableEntity implements Serializable {
     @LastModifiedDate
     private Instant updatedAt;
 
+    /**
+     * Default constructor.
+     * <p>
+     * Protected to prevent instantiation outside of subclasses.
+     * </p>
+     */
     @PrePersist
     protected void onCreate() {
         Instant now = Instant.now();
@@ -33,6 +46,12 @@ public abstract class AuditableEntity implements Serializable {
         this.updatedAt = now;
     }
 
+    /**
+     * Updates the updatedAt field to the current timestamp.
+     * <p>
+     * This method is called before the entity is updated in the database.
+     * </p>
+     */
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = Instant.now();
