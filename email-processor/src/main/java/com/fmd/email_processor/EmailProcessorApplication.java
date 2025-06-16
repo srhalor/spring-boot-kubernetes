@@ -32,5 +32,4 @@ public class EmailProcessorApplication {
 		SpringApplication.run(EmailProcessorApplication.class, args);
 		log.info("Email Processor Application started successfully.");
 	}
-
 }

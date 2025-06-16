@@ -2,18 +2,24 @@ package com.fmd.email_processor.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import lombok.experimental.SuperBuilder;
 
 /**
- * Entity representing an order request for external processing.
+ * Represents an order request in the system.
+ * <p>
+ * This entity is used to track order requests, their status, and processing details.
+ * </p>
+ *
+ * @author Shailesh Halor
+ * @version 1.0
+ * @since 1.0
  */
 @Entity
 @Table(name = "order_requests")
 @Getter
-@ToString(callSuper = true)
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-@SuperBuilder(toBuilder = true)
+@ToString
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class OrderRequest extends AuditableEntity {
 
     @Id

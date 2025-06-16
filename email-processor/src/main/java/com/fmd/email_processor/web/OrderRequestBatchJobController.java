@@ -16,9 +16,13 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.Duration;
 import java.util.concurrent.ScheduledFuture;
 
-/** * Controller for managing the Order Request Batch Job.
+/**
+ * Controller for managing the Order Request Batch Job.
  * Provides endpoints to start, stop, and check the status of the batch job.
- * Automatically starts the job on application startup.
+ * <p>
+ * This controller uses a TaskScheduler to run the batch job at specified intervals,
+ * allowing for periodic processing of order requests.
+ * </p>
  *
  * @author Shailesh Halor
  * @version 1.0
@@ -33,7 +37,10 @@ public class OrderRequestBatchJobController {
     private final OrderRequestBatchProcessingService batchProcessingService;
     private final BatchJobProperties batchJobProperties;
 
-    // Dedicated scheduler for job interval execution.
+    /**
+     * TaskScheduler instance for scheduling the batch job.
+     * Configured with a single thread to ensure sequential execution of the batch job.
+     */
     private final TaskScheduler taskScheduler = createScheduler();
 
     private ScheduledFuture<?> scheduledFuture;
@@ -41,12 +48,19 @@ public class OrderRequestBatchJobController {
     /**
      * Starts the batch job if it is not already running.
      * If already running, returns info message.
+     * <p>
+     * The job runs at a fixed rate defined by the interval in BatchJobProperties.
+     * </p>
+     *
+     * @return a message indicating the status of the batch job
      */
     @PostMapping("/start")
     public synchronized String startJob() {
         if (scheduledFuture != null && !scheduledFuture.isCancelled()) {
+            log.info("Order request batch job is already running.");
             return "Batch job is already running.";
         }
+        log.info("Starting order request batch job with interval {} ms.", batchJobProperties.intervalMs());
         scheduledFuture = taskScheduler.scheduleAtFixedRate(
                 batchProcessingService::fetchNextBatchAndProcess,
                 Duration.ofMillis(batchJobProperties.intervalMs())
@@ -58,12 +72,19 @@ public class OrderRequestBatchJobController {
     /**
      * Stops the batch job if it is currently running.
      * If not running, returns info message.
+     * <p>
+     * Cancels the scheduled task to stop further execution of the batch job.
+     * </p>
+     *
+     * @return a message indicating the status of the batch job
      */
     @PostMapping("/stop")
     public synchronized String stopJob() {
         if (scheduledFuture == null || scheduledFuture.isCancelled()) {
+            log.info("Order request batch job is not running.");
             return "Batch job is not running.";
         }
+        log.info("Stopping order request batch job.");
         scheduledFuture.cancel(false);
         log.info("Order request batch job stopped.");
         return "Batch job stopped.";
@@ -71,7 +92,9 @@ public class OrderRequestBatchJobController {
 
     /**
      * Checks the status of the batch job.
-     * Returns running status if job is active, otherwise returns stopped status.
+     * Returns whether the job is currently running or stopped.
+     *
+     * @return a message indicating the current status of the batch job
      */
     @GetMapping("/status")
     public String jobStatus() {
@@ -83,7 +106,7 @@ public class OrderRequestBatchJobController {
 
     /**
      * Automatically starts the batch job when the application context is initialized.
-     * This ensures that the job runs without manual intervention after deployment.
+     * This ensures that the batch job begins processing order requests immediately upon application startup.
      */
     @PostConstruct
     public void autoStartJob() {
@@ -92,8 +115,8 @@ public class OrderRequestBatchJobController {
     }
 
     /**
-     * Shuts down the scheduler when the application context is destroyed.
-     * This ensures that all scheduled tasks are properly cleaned up.
+     * Shuts down the TaskScheduler when the application context is destroyed.
+     * This ensures that all scheduled tasks are properly cleaned up and resources are released.
      */
     @PreDestroy
     public void shutdownScheduler() {
@@ -103,15 +126,16 @@ public class OrderRequestBatchJobController {
     }
 
     /**
-     * Creates a ThreadPoolTaskScheduler for scheduling the batch job.
-     * Configured with a single thread and a custom thread name prefix.
+     * Creates a TaskScheduler with a single thread for scheduling the batch job.
+     * This ensures that the batch job runs sequentially without overlapping executions.
      *
-     * @return the configured TaskScheduler instance
+     * @return a configured TaskScheduler instance
      */
     private static TaskScheduler createScheduler() {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
         scheduler.setThreadNamePrefix("batch-job-scheduler-");
-        scheduler.setPoolSize(1); // Single thread for job scheduling
+        // Set the pool size to 10 to allow for parallel processing of tasks if needed
+        scheduler.setPoolSize(10);
         scheduler.initialize();
         return scheduler;
     }

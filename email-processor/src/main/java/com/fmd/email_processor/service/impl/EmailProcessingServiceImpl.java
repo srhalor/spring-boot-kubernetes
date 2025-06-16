@@ -15,7 +15,16 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Implementation of {@link EmailProcessingService} binding email server logic to database persistence.
+ * Implementation of the EmailProcessingService interface.
+ * <p>
+ * This service handles the fetching and processing of emails related to order requests,
+ * ensuring that each email is associated with an order request and marked as processed
+ * to avoid duplication.
+ * </p>
+ *
+ * @author Shailesh Halor
+ * @version 1.0
+ * @since 1.0
  */
 @Slf4j
 @Service
@@ -26,14 +35,22 @@ public class EmailProcessingServiceImpl implements EmailProcessingService {
     private final ProcessedEmailRepository processedEmailRepository;
 
     /**
-     * Fetches unprocessed emails matching the provided filters, associates them with an OrderRequest,
-     * persists them as processed, and returns the new emails.
+     * Fetches new emails related to the given order request and persists them in the system.
+     * <p>
+     * This method retrieves emails that have not yet been processed and associates
+     * them with the corresponding order request. It ensures that each email is
+     * stored only once to avoid duplication.
+     * </p>
+     *
+     * @param orderRequest the order request for which new emails are to be fetched
      */
     @Override
     @Transactional
     public void fetchAndPersistNewEmails(OrderRequest orderRequest) {
         Long orderRequestId = orderRequest.getId();
         Instant createdAt = orderRequest.getCreatedAt();
+
+        log.info("Fetching new emails for OrderRequest ID: {}", orderRequestId);
         List<EmailMessage> allEmails = emailServerService.fetchEmails(String.valueOf(orderRequestId), createdAt);
 
         if (null != allEmails && !allEmails.isEmpty()) {
@@ -54,27 +71,38 @@ public class EmailProcessingServiceImpl implements EmailProcessingService {
     }
 
     /**
-     * Checks if the email has not already been processed for the given order request.
+     * Checks if the email has not been processed for the given order request.
      *
      * @param email          the email message
      * @param orderRequestId the associated order request ID
-     * @return true if the email is unprocessed for this order request, false otherwise
+     * @return true if the email is unprocessed for the order request, false otherwise
      */
     private boolean isUnprocessedForOrderRequest(EmailMessage email, Long orderRequestId) {
-        return email.messageId() != null && !processedEmailRepository.existsByMessageIdAndOrderRequestId(email.messageId(), orderRequestId);
+        if (email == null || orderRequestId == null) {
+            log.warn("Email or OrderRequest ID is null. Cannot check processed state.");
+            return false;
+        }
+        log.debug("Checking if email with messageId={} is unprocessed for OrderRequest ID: {}", email.messageId(), orderRequestId);
+        return !processedEmailRepository.existsByMessageIdAndOrderRequestId(email.messageId(), orderRequestId);
     }
 
     /**
-     * Persists a processed email entity for the given order request.
+     * Persists the processed state of the email in the repository.
      *
-     * @param email          the email message
+     * @param email          the email message to be persisted
      * @param orderRequestId the associated order request ID
      */
     private void persistProcessedEmail(EmailMessage email, Long orderRequestId) {
+        if (email == null || orderRequestId == null) {
+            log.warn("Email or OrderRequest ID is null. Cannot persist processed state.");
+            return;
+        }
+        log.debug("Persisting processed state for email with messageId={} and OrderRequest ID: {}", email.messageId(), orderRequestId);
         try {
-            ProcessedEmailEntity entity = new ProcessedEmailEntity();
-            entity.setMessageId(email.messageId());
-            entity.setOrderRequestId(orderRequestId);
+            ProcessedEmailEntity entity = ProcessedEmailEntity.builder()
+                    .messageId(email.messageId())
+                    .orderRequestId(orderRequestId)
+                    .build();
             processedEmailRepository.save(entity);
         } catch (Exception ex) {
             log.error("Failed to persist processed state for messageId={} and orderRequestId={}", email.messageId(), orderRequestId, ex);

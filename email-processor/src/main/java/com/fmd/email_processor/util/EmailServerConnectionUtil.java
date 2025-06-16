@@ -7,30 +7,48 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.Session;
 import jakarta.mail.Store;
 import lombok.experimental.UtilityClass;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Properties;
 
 /**
- * Utility for creating email server connections.
+ * Utility class for managing email server connections.
+ * <p>
+ * This class provides methods to open a connection to an email server,
+ * allowing for interaction with mail folders and messages.
+ * </p>
+ *
+ * @author Shailesh Halor
+ * @version 1.0
+ * @since 1.0
  */
+@Slf4j
 @UtilityClass
 public final class EmailServerConnectionUtil {
 
     /**
-     * Opens a new mail Store and Folder for the given properties.
-     * Caller should use try-with-resources on the returned EmailServerConnection.
+     * Opens a connection to the email server using the provided properties.
+     *
+     * @param props     the properties containing email server configuration
+     * @param readWrite whether to open the folder in read-write mode
+     * @return an EmailServerConnection object containing the store and folder
+     * @throws MessagingException if there is an error connecting to the server or opening the folder
      */
     public static EmailServerConnection openConnection(EmailServerProperties props, boolean readWrite) throws MessagingException {
+        log.info("Opening connection to email server: {}", props.host());
         Properties mailProps = new Properties();
         mailProps.put("mail.store.protocol", props.protocol());
         mailProps.put("mail.imaps.port", String.valueOf(props.port()));
 
         Session session = Session.getInstance(mailProps);
 
+        // Create a store and connect to the email server
         Store store = session.getStore();
         store.connect(props.host(), props.port(), props.username(), props.password());
         Folder folder = store.getFolder(props.folder());
         folder.open(readWrite ? Folder.READ_WRITE : Folder.READ_ONLY);
+
+        log.info("Connected to email server: {}, folder: {}", props.host(), props.folder());
 
         return EmailServerConnection.builder()
                 .store(store)
