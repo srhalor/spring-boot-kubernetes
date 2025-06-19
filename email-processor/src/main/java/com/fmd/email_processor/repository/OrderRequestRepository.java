@@ -1,9 +1,7 @@
 package com.fmd.email_processor.repository;
 
 import com.fmd.email_processor.entity.OrderRequest;
-import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -37,7 +35,6 @@ public interface OrderRequestRepository extends JpaRepository<OrderRequest, Long
      * @param chunkSize number of records to fetch in this batch
      * @return list of OrderRequest entities ready for processing
      */
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query(
             value = """
                         SELECT *
