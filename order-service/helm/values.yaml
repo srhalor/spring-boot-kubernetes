@@ -29,25 +29,33 @@ serviceAccount:
   annotations: {}
   # The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template
-  name: ""
+  name: order-service-sa
 
 # This is for setting Kubernetes Annotations to a Pod.
 # For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
-podAnnotations: {}
+podAnnotations:
+  co.elastic.apm/enable: "true"
+  co.elastic.apm/service-name: "order-service"
 # This is for setting Kubernetes Labels to a Pod.
 # For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
-podLabels: {}
+podLabels:
+  app: order-service
+  environment: production
+  team: payments
+  tier: backend
 
-podSecurityContext: {}
-  # fsGroup: 2000
+podSecurityContext:
+  runAsUser: 1000
+  runAsGroup: 3000
+  fsGroup: 2000
+  runAsNonRoot: true
 
-securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
+securityContext:
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
 
 # This is for setting up a service more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/
 service:
@@ -64,33 +72,41 @@ ingress:
     kubernetes.io/ingress.class: nginx
     nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/rewrite-target: /$2
-    nginx.ingress.kubernetes.io/auth-url: "http://security-service.myspace.svc.cluster.local:8080/api/authenticate"
-    nginx.ingress.kubernetes.io/auth-response-headers: Authorization
+    nginx.ingress.kubernetes.io/auth-url: "https://security-service.myspace.svc.cluster.local:8080/api/authenticate"
+    nginx.ingress.kubernetes.io/auth-response-headers: "*"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/limit-connections: "1000"
+    nginx.ingress.kubernetes.io/limit-rps: "500"
+    nginx.ingress.kubernetes.io/proxy-body-size: "20m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "120"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
   hosts:
     - host: api.fmd.com
       paths:
         - path: /order-service(/|$)(.*)
           pathType: ImplementationSpecific
-  tls: []
+  tls:
+    - hosts:
+        - api.fmd.com
+      secretName: api-tls-secret
 
-resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+resources:
+  requests:
+    cpu: "250m"
+    memory: "512Mi"
+    ephemeral-storage: "512Mi"
+  limits:
+    cpu: "500m"
+    memory: "1Gi"
+    ephemeral-storage: "1Gi"
 
 # This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
 livenessProbe:
   httpGet:
     path: /actuator/health/liveness
     port: 8081
-  initialDelaySeconds: 15
+  initialDelaySeconds: 30
   periodSeconds: 20
   timeoutSeconds: 5
   failureThreshold: 3
@@ -105,10 +121,11 @@ readinessProbe:
 
 # This section is for setting up autoscaling more information can be found here: https://kubernetes.io/docs/concepts/workloads/autoscaling/
 autoscaling:
-  enabled: false
-  minReplicas: 1
-  maxReplicas: 100
-  targetCPUUtilizationPercentage: 80
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 75
+  targetMemoryUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
 
 # Additional volumes on the output Deployment definition.
@@ -129,3 +146,19 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+environmentVariable:
+  SPRING_PROFILES_ACTIVE: "prod"
+  ELASTIC_APM_SERVER_URL: ""
+  SPRING_DATASOURCE_URL: ""
+  SPRING_DATASOURCE_USERNAME: ""
+  # Add more environment variables as needed
+  # EXAMPLE_ENV: "example-value"
+secretEnvironmentVariable:
+  ELASTIC_APM_SECRET_TOKEN:
+    name: order-service-secrets
+    key: apm-secret-token
+  SPRING_DATASOURCE_PASSWORD:
+    name: order-service-secrets
+    key: datasource-password
+  # Add more secret env vars as needed

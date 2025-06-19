@@ -24,7 +24,7 @@ serviceAccount:
   # Specifies whether a service account should be created
   create: true
   # Automatically mount a ServiceAccount's API credentials?
-  automount: false
+  automount: true
   # Annotations to add to the service account
   annotations: {}
   # The name of the service account to use.
@@ -73,7 +73,7 @@ ingress:
     nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/rewrite-target: /$2
     nginx.ingress.kubernetes.io/auth-url: "https://security-service.myspace.svc.cluster.local:8080/api/authenticate"
-    nginx.ingress.kubernetes.io/auth-response-headers: Authorization
+    nginx.ingress.kubernetes.io/auth-response-headers: "*"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/limit-connections: "1000"
     nginx.ingress.kubernetes.io/limit-rps: "500"
@@ -95,9 +95,11 @@ resources:
   requests:
     cpu: "250m"
     memory: "512Mi"
+    ephemeral-storage: "512Mi"
   limits:
     cpu: "500m"
     memory: "1Gi"
+    ephemeral-storage: "1Gi"
 
 # This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
 livenessProbe:
@@ -144,3 +146,19 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+environmentVariable:
+  SPRING_PROFILES_ACTIVE: "prod"
+  ELASTIC_APM_SERVER_URL: ""
+  SPRING_DATASOURCE_URL: ""
+  SPRING_DATASOURCE_USERNAME: ""
+  # Add more environment variables as needed
+  # EXAMPLE_ENV: "example-value"
+secretEnvironmentVariable:
+  ELASTIC_APM_SECRET_TOKEN:
+    name: order-service-secrets
+    key: apm-secret-token
+  SPRING_DATASOURCE_PASSWORD:
+    name: order-service-secrets
+    key: datasource-password
+  # Add more secret env vars as needed
