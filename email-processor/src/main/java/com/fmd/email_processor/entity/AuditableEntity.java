@@ -1,8 +1,11 @@
 package com.fmd.email_processor.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -25,13 +28,16 @@ import java.time.Instant;
 @MappedSuperclass
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@SuperBuilder
 public abstract class AuditableEntity implements Serializable {
 
-    @Column(name = "created_at", updatable = false, nullable = false)
+    @Column(name = "created_date", updatable = false, nullable = false)
     @CreatedDate
     private Instant createdAt;
 
-    @Column(name = "updated_at")
+    @Column(name = "updated_date")
     @LastModifiedDate
     private Instant updatedAt;
 

@@ -2,6 +2,7 @@ package com.fmd.email_processor.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 /**
  * Represents an order request in the system.
@@ -19,7 +20,7 @@ import lombok.*;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 public class OrderRequest extends AuditableEntity {
 
     @Id

@@ -7,6 +7,7 @@ import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -79,6 +80,7 @@ public class OrderRequestBatchJobController {
      * @return a message indicating the status of the batch job
      */
     @PostMapping("/stop")
+    @Scheduled(fixedRate = 60_000)
     public synchronized String stopJob() {
         if (scheduledFuture == null || scheduledFuture.isCancelled()) {
             log.info("Order request batch job is not running.");
@@ -134,8 +136,7 @@ public class OrderRequestBatchJobController {
     private static TaskScheduler createScheduler() {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
         scheduler.setThreadNamePrefix("batch-job-scheduler-");
-        // Set the pool size to 10 to allow for parallel processing of tasks if needed
-        scheduler.setPoolSize(10);
+        scheduler.setPoolSize(1);
         scheduler.initialize();
         return scheduler;
     }
