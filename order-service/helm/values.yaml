@@ -147,13 +147,34 @@ tolerations: []
 
 affinity: {}
 
+# Environment variables for the application.
 environmentVariable:
-  SPRING_PROFILES_ACTIVE: "prod"
-  ELASTIC_APM_SERVER_URL: ""
+  # Enable graceful shutdown in Spring Boot 2.3+
+  SERVER_SHUTDOWN: "graceful"
+  # Enable virtual threads in Spring Boot 3.2+
+  SPRING_THREADS_VIRTUAL_ENABLED: "true"
+  # APM for Elastic observability
+  ELASTIC_APM_SERVER_URL: "http://apm-server:8200"
+  ELASTIC_APM_SERVICE_NAME: "order-service"
+  ELASTIC_APM_ENVIRONMENT: "development"
+  ELASTIC_APM_APPLICATION_PACKAGES: "com.fmd.order"
+  # Database connection configuration
   SPRING_DATASOURCE_URL: ""
+  SPRING_DATASOURCE_DRIVER_CLASS_NAME: ""
   SPRING_DATASOURCE_USERNAME: ""
-  # Add more environment variables as needed
-  # EXAMPLE_ENV: "example-value"
+  # Spring Boot Actuator configuration
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "*"
+  MANAGEMENT_SERVER_PORT: 8081
+  # Logging configuration
+  LOGGING_LEVEL_ROOT: "INFO"
+  LOGGING_LEVEL_COM_FMD: "DEBUG"
+  LOGGING_STRUCTURED_FORMAT_CONSOLE: "ecs"
+  LOGGING_INCLUDE_LOCATION: "true"
+  LOGGING_STRUCTURED_ECS_SERVICE_NAME: "order-service"
+  LOGGING_STRUCTURED_ECS_SERVICE_VERSION: "1"
+  LOGGING_STRUCTURED_ECS_SERVICE_ENVIRONMENT: "development"
+  LOGGING_STRUCTURED_ECS_SERVICE_NODE-NAME: "primary"
+
 secretEnvironmentVariable:
   ELASTIC_APM_SECRET_TOKEN:
     name: order-service-secrets
