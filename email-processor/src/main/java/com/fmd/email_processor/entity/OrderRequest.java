@@ -15,7 +15,11 @@ import lombok.experimental.SuperBuilder;
  * @since 1.0
  */
 @Entity
-@Table(name = "order_requests")
+@Table(name = "order_requests", indexes = {
+        @Index(name = "idx_orderrequest_processed", columnList = "processed"),
+        @Index(name = "idx_orderrequest_created_date", columnList = "created_date"),
+        @Index(name = "idx_orderrequest_status", columnList = "status")
+})
 @Getter
 @ToString
 @NoArgsConstructor

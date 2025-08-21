@@ -33,13 +33,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 class SecurityControllerTest {
-    @Autowired
-    private MockMvc mockMvc;
-
     private static final String URL = "/api/authenticate";
     private static final String VALID_TOKEN_CORRECT_ROLES = "Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJUZXN0IiwiaWF0IjoxNzQ3OTI3NjkyLCJleHAiOjE3Nzk0NjM2OTcsImF1ZCI6ImF1ZGlhbmNlIiwic3ViIjoidXNlcm5hbWUiLCJuYW1lIjoiSm9obm55Iiwicm9sZXMiOlsiVXNlciIsIkFkbWluIl19.2gS8pFXJuQ1u19GjDp7UcyTRVVlmBWNnJSukjDz2ENQ";
     private static final String VALID_TOKEN_INCORRECT_ROLES = "Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJUZXN0IiwiaWF0IjoxNzQ3OTI3NjkyLCJleHAiOjE3Nzk0NjM2OTcsImF1ZCI6ImF1ZGlhbmNlIiwic3ViIjoidXNlcm5hbWUiLCJuYW1lIjoiSm9obm55In0.z0kVJ8VRaoEg2xzMy9i2aJ-0sV1rfZLnVt2DuEycxbQ";
     private static final String INVALID_TOKEN = "Bearer invalid.token.value";
+    @Autowired
+    private MockMvc mockMvc;
 
     /**
      * Test: Should return 200 OK for valid token with correct roles.
@@ -151,3 +150,4 @@ class SecurityControllerTest {
                 .andExpect(status().isUnauthorized());
     }
 }
+
