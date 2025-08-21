@@ -15,7 +15,10 @@ import lombok.*;
  * @since 1.0
  */
 @Entity
-@Table(name = "processed_email")
+@Table(name = "processed_email", indexes = {
+        @Index(name = "idx_processedemail_messageid", columnList = "messageId"),
+        @Index(name = "idx_processedemail-orderrequestid", columnList = "orderRequestId")
+})
 @Getter
 @Setter
 @NoArgsConstructor

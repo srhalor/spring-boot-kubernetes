@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -82,4 +83,25 @@ public interface OrderRequestRepository extends JpaRepository<OrderRequest, Long
             @Param("retryCount") int retryCount,
             @Param("failureReason") String failureReason
     );
+
+    /**
+     * Finds all statuses that are not present in the order_requests table.
+     * <p>
+     * This method checks against a list of statuses and returns those that do not exist in the database.
+     * </p>
+     *
+     * @param statuses list of statuses to check against the database
+     * @return list of statuses that are missing in the order_requests table
+     */
+    @Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
+    @Query(
+            value = """
+                      SELECT s.status
+                      FROM unnest(:statuses) AS s(status)
+                      LEFT JOIN order_requests o ON o.status = s.status
+                      WHERE o.status IS NULL
+                    """,
+            nativeQuery = true
+    )
+    List<String> findMissingStatuses(@Param("statuses") List<String> statuses);
 }
